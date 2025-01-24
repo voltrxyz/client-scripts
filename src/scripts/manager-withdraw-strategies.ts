@@ -13,20 +13,21 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { sendAndConfirmOptimisedTx } from "./helper";
+import { sendAndConfirmOptimisedTx } from "../helper";
 import { BN } from "@coral-xyz/anchor";
 import {
   DEFAULT_ADAPTOR_PROGRAM_ID,
   SEEDS,
   VoltrClient,
 } from "@voltr/vault-sdk";
-import { managerFilePath, marginfiAccount } from "./variables";
 import {
+  managerFilePath,
+  marginfiAccount,
   heliusRpcUrl,
   vaultAddress,
   withdrawAmountPerStrategy,
-} from "./variables";
-import { assetMintAddress } from "./variables";
+  assetMintAddress,
+} from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
 
 const payerKpFile = fs.readFileSync(managerFilePath, "utf-8");

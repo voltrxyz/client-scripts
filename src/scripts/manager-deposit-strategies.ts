@@ -12,7 +12,7 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { sendAndConfirmOptimisedTx } from "./helper";
+import { sendAndConfirmOptimisedTx } from "../helper";
 import { BN } from "@coral-xyz/anchor";
 import {
   DEFAULT_ADAPTOR_PROGRAM_ID,
@@ -26,7 +26,7 @@ import {
   managerFilePath,
   marginfiAccount,
   vaultAddress,
-} from "./variables";
+} from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
 
 const payerKpFile = fs.readFileSync(managerFilePath, "utf-8");

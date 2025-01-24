@@ -1,7 +1,7 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
 import { BN } from "@coral-xyz/anchor";
-import { sendAndConfirmOptimisedTx } from "./helper";
+import { sendAndConfirmOptimisedTx } from "../helper";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
@@ -14,7 +14,7 @@ import {
   assetMintAddress,
   withdrawAmountPerStrategy,
   heliusRpcUrl,
-} from "./variables";
+} from "../variables";
 
 const userKpFile = fs.readFileSync(userFilePath, "utf-8");
 const userKpData = JSON.parse(userKpFile);

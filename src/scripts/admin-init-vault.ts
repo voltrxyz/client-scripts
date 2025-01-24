@@ -1,6 +1,6 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
-import { sendAndConfirmOptimisedTx } from "./helper";
+import { sendAndConfirmOptimisedTx } from "../helper";
 import { VoltrClient } from "@voltr/vault-sdk";
 import {
   adminFilePath,
@@ -8,7 +8,7 @@ import {
   heliusRpcUrl,
   managerFilePath,
   vaultParams,
-} from "./variables";
+} from "../variables";
 
 const payerKpFile = fs.readFileSync(adminFilePath, "utf-8");
 const payerKpData = JSON.parse(payerKpFile);
