@@ -47,6 +47,8 @@ const initVaultHandler = async () => {
     payerKp,
     [vaultKp]
   );
+
+  await connection.confirmTransaction(txSig, "finalized");
   console.log(`Vault initialized with signature: ${txSig}`);
   console.log("Vault:", vault.toBase58());
 };

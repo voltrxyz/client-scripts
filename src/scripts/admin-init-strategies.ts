@@ -11,7 +11,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { sendAndConfirmOptimisedTx } from ".../helper";
+import { sendAndConfirmOptimisedTx } from "../helper";
 import { BN } from "@coral-xyz/anchor";
 import * as fs from "fs";
 import {
@@ -24,7 +24,7 @@ import {
   assetMintAddress,
   heliusRpcUrl,
   vaultAddress,
-} from ".../variables";
+} from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
 
 const payerKpFile = fs.readFileSync(adminFilePath, "utf-8");
