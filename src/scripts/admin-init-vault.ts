@@ -1,22 +1,22 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
 import { sendAndConfirmOptimisedTx } from "./helper";
-import {
-  ADMIN_FILE_PATH,
-  ASSET_MINT_ADDRESS,
-  HELIUS_RPC_URL,
-  MANAGER_FILE_PATH,
-  VAULT_PARAMS,
-} from "./constants";
 import { VoltrClient } from "@voltr/vault-sdk";
+import {
+  adminFilePath,
+  assetMintAddress,
+  heliusRpcUrl,
+  managerFilePath,
+  vaultParams,
+} from "./variables";
 
-const payerKpFile = fs.readFileSync(ADMIN_FILE_PATH, "utf-8");
+const payerKpFile = fs.readFileSync(adminFilePath, "utf-8");
 const payerKpData = JSON.parse(payerKpFile);
 const payerSecret = Uint8Array.from(payerKpData);
 const payerKp = Keypair.fromSecretKey(payerSecret);
 const payer = payerKp.publicKey;
 
-const managerKpFile = fs.readFileSync(MANAGER_FILE_PATH, "utf-8");
+const managerKpFile = fs.readFileSync(managerFilePath, "utf-8");
 const managerKpData = JSON.parse(managerKpFile);
 const managerSecret = Uint8Array.from(managerKpData);
 const managerKp = Keypair.fromSecretKey(managerSecret);
@@ -24,14 +24,14 @@ const manager = managerKp.publicKey;
 
 const vaultKp = Keypair.generate();
 const vault = vaultKp.publicKey;
-const vaultAssetMint = new PublicKey(ASSET_MINT_ADDRESS);
+const vaultAssetMint = new PublicKey(assetMintAddress);
 
-const connection = new Connection(HELIUS_RPC_URL);
+const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
 
 const initVaultHandler = async () => {
   const createInitializeVaultIx = await vc.createInitializeVaultIx(
-    VAULT_PARAMS,
+    vaultParams,
     {
       vault: vaultKp,
       vaultAssetMint,
@@ -43,7 +43,7 @@ const initVaultHandler = async () => {
 
   const txSig = await sendAndConfirmOptimisedTx(
     [createInitializeVaultIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp,
     [vaultKp]
   );
@@ -59,7 +59,7 @@ const addAdaptorHandler = async () => {
   });
   const txSig = await sendAndConfirmOptimisedTx(
     [createAddAdaptorIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log(`Adaptor added with signature: ${txSig}`);

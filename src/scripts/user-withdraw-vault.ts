@@ -7,27 +7,27 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import {
-  ASSET_MINT_ADDRESS,
-  HELIUS_RPC_URL,
-  USER_FILE_PATH,
-  VAULT_ADDRESS,
-  WITHDRAW_AMOUNT,
-} from "./constants";
 import { VoltrClient } from "@voltr/vault-sdk";
+import {
+  userFilePath,
+  vaultAddress,
+  assetMintAddress,
+  withdrawAmountPerStrategy,
+  heliusRpcUrl,
+} from "./variables";
 
-const userKpFile = fs.readFileSync(USER_FILE_PATH, "utf-8");
+const userKpFile = fs.readFileSync(userFilePath, "utf-8");
 const userKpData = JSON.parse(userKpFile);
 const userSecret = Uint8Array.from(userKpData);
 const userKp = Keypair.fromSecretKey(userSecret);
 const user = userKp.publicKey;
 
-const vault = new PublicKey(VAULT_ADDRESS);
-const vaultAssetMint = new PublicKey(ASSET_MINT_ADDRESS);
+const vault = new PublicKey(vaultAddress);
+const vaultAssetMint = new PublicKey(assetMintAddress);
 
-const connection = new Connection(HELIUS_RPC_URL);
+const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
-const withdrawAmount = new BN(WITHDRAW_AMOUNT);
+const withdrawAmount = new BN(withdrawAmountPerStrategy);
 
 const withdrawVaultHandler = async () => {
   const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
@@ -47,7 +47,7 @@ const withdrawVaultHandler = async () => {
 
   const txSig = await sendAndConfirmOptimisedTx(
     [createUserAssetAtaIx, withdrawVaultIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     userKp
   );
   console.log("Withdraw Vault Tx Sig: ", txSig);

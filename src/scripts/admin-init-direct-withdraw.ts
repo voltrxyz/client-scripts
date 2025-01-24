@@ -3,33 +3,27 @@ import { sendAndConfirmOptimisedTx } from "./helper";
 import { BN } from "@coral-xyz/anchor";
 import * as fs from "fs";
 import {
-  ADMIN_FILE_PATH,
-  ASSET_MINT_ADDRESS,
-  DRIFT_PROGRAM_ID,
-  HELIUS_RPC_URL,
-  KLEND_LENDING_MARKET,
-  KLEND_PROGRAM_ID,
-  MARGINFI_BANK,
-  MARGINFI_PROGRAM_ID,
-  DRIFT_MARKET_INDEX,
-  SOLEND_COUNTER_PARTY_TA,
-  VAULT_ADDRESS,
-} from "./constants";
-import {
   DEFAULT_ADAPTOR_PROGRAM_ID,
   SEEDS,
   VoltrClient,
 } from "@voltr/vault-sdk";
+import {
+  adminFilePath,
+  assetMintAddress,
+  heliusRpcUrl,
+  vaultAddress,
+} from "./variables";
+import { PROTOCOL_CONSTANTS } from "../constants";
 
-const payerKpFile = fs.readFileSync(ADMIN_FILE_PATH, "utf-8");
+const payerKpFile = fs.readFileSync(adminFilePath, "utf-8");
 const payerKpData = JSON.parse(payerKpFile);
 const payerSecret = Uint8Array.from(payerKpData);
 const payerKp = Keypair.fromSecretKey(payerSecret);
 const payer = payerKp.publicKey;
-const vault = new PublicKey(VAULT_ADDRESS);
-const vaultAssetMint = new PublicKey(ASSET_MINT_ADDRESS);
+const vault = new PublicKey(vaultAddress);
+const vaultAssetMint = new PublicKey(assetMintAddress);
 
-const connection = new Connection(HELIUS_RPC_URL);
+const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
 
 const initDirectWithdrawSolendStrategy = async (counterPartyTa: PublicKey) => {
@@ -46,7 +40,7 @@ const initDirectWithdrawSolendStrategy = async (counterPartyTa: PublicKey) => {
 
   const txSig = await sendAndConfirmOptimisedTx(
     [initializeDirectWithdrawStrategyIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log(
@@ -75,7 +69,7 @@ const initDirectWithdrawMarginfiStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     [initializeDirectWithdrawStrategyIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log(
@@ -110,7 +104,7 @@ const initDirectWithdrawKlendStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     [initializeDirectWithdrawStrategyIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log(
@@ -147,7 +141,7 @@ const initDirectWithdrawDriftStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     [initializeDirectWithdrawStrategyIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log(
@@ -158,19 +152,19 @@ const initDirectWithdrawDriftStrategy = async (
 
 const main = async () => {
   await initDirectWithdrawSolendStrategy(
-    new PublicKey(SOLEND_COUNTER_PARTY_TA)
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.COUNTERPARTY_TA)
   );
   await initDirectWithdrawMarginfiStrategy(
-    new PublicKey(MARGINFI_PROGRAM_ID),
-    new PublicKey(MARGINFI_BANK)
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.BANK)
   );
   await initDirectWithdrawKlendStrategy(
-    new PublicKey(KLEND_PROGRAM_ID),
-    new PublicKey(KLEND_LENDING_MARKET)
+    new PublicKey(PROTOCOL_CONSTANTS.KLEND.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.KLEND.MAIN_MARKET.LENDING_MARKET)
   );
   await initDirectWithdrawDriftStrategy(
-    new PublicKey(DRIFT_PROGRAM_ID),
-    new BN(DRIFT_MARKET_INDEX)
+    new PublicKey(PROTOCOL_CONSTANTS.DRIFT.PROGRAM_ID),
+    new BN(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.MARKET_INDEX)
   );
 };
 

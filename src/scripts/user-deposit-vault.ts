@@ -7,27 +7,27 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import {
-  ASSET_MINT_ADDRESS,
-  DEPOSIT_AMOUNT,
-  HELIUS_RPC_URL,
-  USER_FILE_PATH,
-  VAULT_ADDRESS,
-} from "./constants";
 import { VoltrClient } from "@voltr/vault-sdk";
+import {
+  userFilePath,
+  vaultAddress,
+  assetMintAddress,
+  depositAmountPerStrategy,
+  heliusRpcUrl,
+} from "./variables";
 
-const userKpFile = fs.readFileSync(USER_FILE_PATH, "utf-8");
+const userKpFile = fs.readFileSync(userFilePath, "utf-8");
 const userKpData = JSON.parse(userKpFile);
 const userSecret = Uint8Array.from(userKpData);
 const userKp = Keypair.fromSecretKey(userSecret);
 const user = userKp.publicKey;
 
-const vault = new PublicKey(VAULT_ADDRESS);
-const vaultAssetMint = new PublicKey(ASSET_MINT_ADDRESS);
+const vault = new PublicKey(vaultAddress);
+const vaultAssetMint = new PublicKey(assetMintAddress);
 
-const connection = new Connection(HELIUS_RPC_URL);
+const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
-const depositAmount = new BN(DEPOSIT_AMOUNT);
+const depositAmount = new BN(depositAmountPerStrategy);
 
 const depositVaultHandler = async () => {
   const { vaultLpMint } = vc.findVaultAddresses(vault);
@@ -47,7 +47,7 @@ const depositVaultHandler = async () => {
 
   const txSig = await sendAndConfirmOptimisedTx(
     [createUserLpAtaIx, depositVaultIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     userKp
   );
   console.log("Deposit Vault Tx Sig: ", txSig);

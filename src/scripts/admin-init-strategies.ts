@@ -15,37 +15,27 @@ import { sendAndConfirmOptimisedTx } from "./helper";
 import { BN } from "@coral-xyz/anchor";
 import * as fs from "fs";
 import {
-  ADMIN_FILE_PATH,
-  ASSET_MINT_ADDRESS,
-  DRIFT_PROGRAM_ID,
-  DRIFT_STATE,
-  HELIUS_RPC_URL,
-  KLEND_LENDING_MARKET,
-  KLEND_PROGRAM_ID,
-  MARGINFI_BANK,
-  MARGINFI_GROUP,
-  MARGINFI_PROGRAM_ID,
-  DRIFT_MARKET_INDEX,
-  SOLEND_COUNTER_PARTY_TA,
-  SOLEND_LENDING_MARKET,
-  SOLEND_PROGRAM_ID,
-  VAULT_ADDRESS,
-} from "./constants";
-import {
   DEFAULT_ADAPTOR_PROGRAM_ID,
   SEEDS,
   VoltrClient,
 } from "@voltr/vault-sdk";
+import {
+  adminFilePath,
+  assetMintAddress,
+  heliusRpcUrl,
+  vaultAddress,
+} from "./variables";
+import { PROTOCOL_CONSTANTS } from "../constants";
 
-const payerKpFile = fs.readFileSync(ADMIN_FILE_PATH, "utf-8");
+const payerKpFile = fs.readFileSync(adminFilePath, "utf-8");
 const payerKpData = JSON.parse(payerKpFile);
 const payerSecret = Uint8Array.from(payerKpData);
 const payerKp = Keypair.fromSecretKey(payerSecret);
 const payer = payerKp.publicKey;
-const vault = new PublicKey(VAULT_ADDRESS);
-const vaultAssetMint = new PublicKey(ASSET_MINT_ADDRESS);
+const vault = new PublicKey(vaultAddress);
+const vaultAssetMint = new PublicKey(assetMintAddress);
 
-const connection = new Connection(HELIUS_RPC_URL);
+const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
 
 const initSolendStrategy = async (
@@ -91,7 +81,7 @@ const initSolendStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     [createInitializeStrategyIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log("Solend strategy initialized with signature:", txSig);
@@ -132,7 +122,7 @@ const initMarginfiStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     [createInitializeStrategyIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp,
     [marginfiAccountKp]
   );
@@ -190,7 +180,7 @@ const initKlendStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     [createInitializeStrategyIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log("Klend strategy initialized with signature:", txSig);
@@ -248,7 +238,7 @@ const initDriftStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     [createInitializeStrategyIx],
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log("Drift strategy initialized with signature:", txSig);
@@ -256,23 +246,23 @@ const initDriftStrategy = async (
 
 const main = async () => {
   await initSolendStrategy(
-    new PublicKey(SOLEND_PROGRAM_ID),
-    new PublicKey(SOLEND_COUNTER_PARTY_TA),
-    new PublicKey(SOLEND_LENDING_MARKET)
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.COUNTERPARTY_TA),
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.LENDING_MARKET)
   );
   await initMarginfiStrategy(
-    new PublicKey(MARGINFI_PROGRAM_ID),
-    new PublicKey(MARGINFI_BANK),
-    new PublicKey(MARGINFI_GROUP)
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.BANK),
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.GROUP)
   );
   await initKlendStrategy(
-    new PublicKey(KLEND_PROGRAM_ID),
-    new PublicKey(KLEND_LENDING_MARKET)
+    new PublicKey(PROTOCOL_CONSTANTS.KLEND.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.KLEND.MAIN_MARKET.LENDING_MARKET)
   );
   await initDriftStrategy(
-    new PublicKey(DRIFT_PROGRAM_ID),
-    new PublicKey(DRIFT_STATE),
-    new BN(DRIFT_MARKET_INDEX)
+    new PublicKey(PROTOCOL_CONSTANTS.DRIFT.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.STATE),
+    new BN(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.MARKET_INDEX)
   );
 };
 

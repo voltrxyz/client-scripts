@@ -15,49 +15,32 @@ import {
 import { sendAndConfirmOptimisedTx } from "./helper";
 import { BN } from "@coral-xyz/anchor";
 import {
-  ASSET_MINT_ADDRESS,
-  DEPOSIT_AMOUNT_PER_STRATEGY,
-  DRIFT_MARKET_INDEX,
-  DRIFT_ORACLE,
-  DRIFT_PROGRAM_ID,
-  DRIFT_STATE,
-  HELIUS_RPC_URL,
-  KLEND_LENDING_MARKET,
-  KLEND_PROGRAM_ID,
-  KLEND_RESERVE,
-  KLEND_SCOPE_ORACLE,
-  MARGINFI_ACCOUNT,
-  MARGINFI_BANK,
-  MARGINFI_GROUP,
-  MARGINFI_PROGRAM_ID,
-  SOLEND_COLLATERAL_MINT,
-  SOLEND_COUNTER_PARTY_TA,
-  SOLEND_LENDING_MARKET,
-  SOLEND_PROGRAM_ID,
-  SOLEND_PYTH_ORACLE,
-  SOLEND_RESERVE,
-  SOLEND_SWITCHBOARD_ORACLE,
-  VAULT_ADDRESS,
-  MANAGER_FILE_PATH,
-} from "./constants";
-import {
   DEFAULT_ADAPTOR_PROGRAM_ID,
   SEEDS,
   VoltrClient,
 } from "@voltr/vault-sdk";
+import {
+  assetMintAddress,
+  depositAmountPerStrategy,
+  heliusRpcUrl,
+  managerFilePath,
+  marginfiAccount,
+  vaultAddress,
+} from "./variables";
+import { PROTOCOL_CONSTANTS } from "../constants";
 
-const payerKpFile = fs.readFileSync(MANAGER_FILE_PATH, "utf-8");
+const payerKpFile = fs.readFileSync(managerFilePath, "utf-8");
 const payerKpData = JSON.parse(payerKpFile);
 const payerSecret = Uint8Array.from(payerKpData);
 const payerKp = Keypair.fromSecretKey(payerSecret);
 const payer = payerKp.publicKey;
 
-const vault = new PublicKey(VAULT_ADDRESS);
-const vaultAssetMint = new PublicKey(ASSET_MINT_ADDRESS);
+const vault = new PublicKey(vaultAddress);
+const vaultAssetMint = new PublicKey(assetMintAddress);
 
-const connection = new Connection(HELIUS_RPC_URL);
+const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
-const depositAmount = new BN(DEPOSIT_AMOUNT_PER_STRATEGY);
+const depositAmount = new BN(depositAmountPerStrategy);
 
 const depositSolendStrategy = async (
   protocolProgram: PublicKey,
@@ -153,7 +136,7 @@ const depositSolendStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log("Solend strategy deposited with signature:", txSig);
@@ -222,7 +205,7 @@ const depositMarginfiStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log("Marginfi strategy deposited with signature:", txSig);
@@ -339,7 +322,7 @@ const depositKlendStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log("Klend strategy deposited with signature:", txSig);
@@ -435,7 +418,7 @@ const depositDriftStrategy = async (
 
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
-    HELIUS_RPC_URL,
+    heliusRpcUrl,
     payerKp
   );
   console.log("Drift strategy deposited with signature:", txSig);
@@ -443,31 +426,31 @@ const depositDriftStrategy = async (
 
 const main = async () => {
   await depositSolendStrategy(
-    new PublicKey(SOLEND_PROGRAM_ID),
-    new PublicKey(SOLEND_COUNTER_PARTY_TA),
-    new PublicKey(SOLEND_LENDING_MARKET),
-    new PublicKey(SOLEND_RESERVE),
-    new PublicKey(SOLEND_COLLATERAL_MINT),
-    new PublicKey(SOLEND_PYTH_ORACLE),
-    new PublicKey(SOLEND_SWITCHBOARD_ORACLE)
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.COUNTERPARTY_TA),
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.LENDING_MARKET),
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.RESERVE),
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.COLLATERAL_MINT),
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.PYTH_ORACLE),
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.SWITCHBOARD_ORACLE)
   );
   await depositMarginfiStrategy(
-    new PublicKey(MARGINFI_PROGRAM_ID),
-    new PublicKey(MARGINFI_BANK),
-    new PublicKey(MARGINFI_ACCOUNT),
-    new PublicKey(MARGINFI_GROUP)
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.BANK),
+    new PublicKey(marginfiAccount),
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.GROUP)
   );
   await depositKlendStrategy(
-    new PublicKey(KLEND_PROGRAM_ID),
-    new PublicKey(KLEND_LENDING_MARKET),
-    new PublicKey(KLEND_RESERVE),
-    new PublicKey(KLEND_SCOPE_ORACLE)
+    new PublicKey(PROTOCOL_CONSTANTS.KLEND.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.KLEND.MAIN_MARKET.LENDING_MARKET),
+    new PublicKey(PROTOCOL_CONSTANTS.KLEND.MAIN_MARKET.USDC.RESERVE),
+    new PublicKey(PROTOCOL_CONSTANTS.KLEND.SCOPE_ORACLE)
   );
   await depositDriftStrategy(
-    new PublicKey(DRIFT_PROGRAM_ID),
-    new PublicKey(DRIFT_STATE),
-    new BN(DRIFT_MARKET_INDEX),
-    new PublicKey(DRIFT_ORACLE)
+    new PublicKey(PROTOCOL_CONSTANTS.DRIFT.PROGRAM_ID),
+    new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.STATE),
+    new BN(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.MARKET_INDEX),
+    new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.ORACLE)
   );
 };
 
