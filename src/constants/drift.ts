@@ -1,5 +1,6 @@
 export const DRIFT = {
   PROGRAM_ID: "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH",
+  SUB_ACCOUNT_ID: 0,
   SPOT: {
     STATE: "5zpq7DvB6UdFFvpmBPspGPNfUGoBRRCE2HHg5u3gxcsN",
     SOL: {

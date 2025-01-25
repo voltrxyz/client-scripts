@@ -338,6 +338,7 @@ const withdrawDriftStrategy = async (
   protocolProgram: PublicKey,
   state: PublicKey,
   marketIndex: BN,
+  subAccountId: BN,
   oracle: PublicKey
 ) => {
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
@@ -363,7 +364,7 @@ const withdrawDriftStrategy = async (
     [
       Buffer.from("user"),
       vaultStrategyAuth.toBuffer(),
-      marketIndex.toArrayLike(Buffer, "le", 2),
+      subAccountId.toArrayLike(Buffer, "le", 2),
     ],
     protocolProgram
   );
@@ -463,6 +464,7 @@ const main = async () => {
     new PublicKey(PROTOCOL_CONSTANTS.DRIFT.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.STATE),
     new BN(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.MARKET_INDEX),
+    new BN(PROTOCOL_CONSTANTS.DRIFT.SUB_ACCOUNT_ID),
     new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.ORACLE)
   );
 };
