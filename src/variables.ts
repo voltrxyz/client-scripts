@@ -2,7 +2,7 @@ import { BN } from "@coral-xyz/anchor";
 import { VaultConfig, VaultParams } from "@voltr/vault-sdk";
 
 // ONLY NEEDED FOR INIT VAULT
-const vaultConfig: VaultConfig = {
+export const vaultConfig: VaultConfig = {
   maxCap: new BN(0), // 100K USDC (10^6 Decimals)
   startAtTs: new BN(0),
   managerPerformanceFee: -1, // 500 = 5% in basis points
