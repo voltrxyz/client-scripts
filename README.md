@@ -200,6 +200,9 @@ Below is a summary of each script for convenience:
 - **`admin-init-vault.ts`**  
   Initializes a new vault, specifying manager/admin keys and vault config.
 
+- **`admint-update-vault.ts`**
+  Updates the vault's config.
+
 - **`admin-init-strategies.ts`**  
   Creates and initializes strategies across supported protocols.
 
@@ -221,11 +224,22 @@ Below is a summary of each script for convenience:
 - **`user-withdraw-vault.ts`**  
   User withdraws from the vault, swapping LP tokens back to the vault’s base asset.
 
+- **`all-query-strategy-positions.ts`**
+  Queries the positions of all strategies and prints them to the console.
+
 ---
 
 ## Protocol Integration Details
 
 This project currently supports the following protocols:
+
+| **Token** | **Solend**  | **Marginfi** | **Drift**   | **Klend**                                                      |
+| --------- | ----------- | ------------ | ----------- | -------------------------------------------------------------- |
+| **SOL**   | Main Market | Main Market  | Spot Market | Main Market <br> Jito Market                                   |
+| **USDC**  | Main Market | Main Market  | Spot Market | Main Market <br> Alt Market <br> JLP Market                    |
+| **USDT**  | Main Market | Main Market  | Spot Market | Main Market <br> JLP Market                                    |
+| **PYUSD** | —           | Main Market  | Spot Market | Main Market <br> Alt Market <br> JLP Market <br> Ethena Market |
+| **USDS**  | Main Market | Main Market  | Spot Market | Main Market                                                    |
 
 1. **Solend**  
    Constants and addresses in `src/constants/solend.ts`.
