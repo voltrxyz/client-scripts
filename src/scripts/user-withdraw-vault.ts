@@ -38,7 +38,7 @@ const withdrawVaultHandler = async () => {
       user,
       vaultAssetMint
     );
-  const withdrawVaultIx = await vc.createWithdrawIx(withdrawAmount, {
+  const withdrawVaultIx = await vc.createWithdrawVaultIx(withdrawAmount, {
     vault,
     userAuthority: user,
     vaultAssetMint,
