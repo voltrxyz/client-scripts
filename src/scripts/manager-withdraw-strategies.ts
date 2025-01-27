@@ -144,7 +144,8 @@ const withdrawMarginfiStrategy = async (
   protocolProgram: PublicKey,
   bank: PublicKey,
   marginfiAccount: PublicKey,
-  marginfiGroup: PublicKey
+  marginfiGroup: PublicKey,
+  oracle: PublicKey
 ) => {
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [Buffer.from("liquidity_vault"), bank.toBuffer()],
@@ -202,6 +203,7 @@ const withdrawMarginfiStrategy = async (
         { pubkey: marginfiGroup, isSigner: false, isWritable: true },
         { pubkey: marginfiAccount, isSigner: false, isWritable: true },
         { pubkey: bank, isSigner: false, isWritable: true },
+        { pubkey: oracle, isSigner: false, isWritable: false },
       ],
     }
   );
@@ -452,7 +454,8 @@ const main = async () => {
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.BANK),
     new PublicKey(marginfiAccount),
-    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.GROUP)
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.GROUP),
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.ORACLE)
   );
   await withdrawKlendStrategy(
     new PublicKey(PROTOCOL_CONSTANTS.KLEND.PROGRAM_ID),
