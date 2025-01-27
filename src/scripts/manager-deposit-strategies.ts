@@ -26,6 +26,7 @@ import {
   managerFilePath,
   marginfiAccount,
   vaultAddress,
+  assetTokenProgram,
 } from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
 
@@ -111,7 +112,7 @@ const depositSolendStrategy = async (
       manager: payer,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTa, isSigner: false, isWritable: true },
@@ -189,7 +190,7 @@ const depositMarginfiStrategy = async (
       manager: payer,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTa, isSigner: false, isWritable: true },
@@ -293,7 +294,7 @@ const depositKlendStrategy = async (
       manager: payer,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTa, isSigner: false, isWritable: true },
@@ -401,7 +402,7 @@ const depositDriftStrategy = async (
       manager: payer,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTa, isSigner: false, isWritable: true },

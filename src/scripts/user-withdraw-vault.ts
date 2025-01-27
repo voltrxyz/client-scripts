@@ -5,7 +5,6 @@ import { sendAndConfirmOptimisedTx } from "../helper";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
-  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { VoltrClient } from "@voltr/vault-sdk";
 import {
@@ -14,6 +13,7 @@ import {
   assetMintAddress,
   withdrawAmountPerStrategy,
   heliusRpcUrl,
+  assetTokenProgram,
 } from "../variables";
 
 const userKpFile = fs.readFileSync(userFilePath, "utf-8");
@@ -42,7 +42,7 @@ const withdrawVaultHandler = async () => {
     vault,
     userAuthority: user,
     vaultAssetMint,
-    assetTokenProgram: TOKEN_PROGRAM_ID,
+    assetTokenProgram: new PublicKey(assetTokenProgram),
   });
 
   const txSig = await sendAndConfirmOptimisedTx(

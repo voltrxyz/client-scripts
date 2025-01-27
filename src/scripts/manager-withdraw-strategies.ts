@@ -27,6 +27,7 @@ import {
   vaultAddress,
   withdrawAmountPerStrategy,
   assetMintAddress,
+  assetTokenProgram,
 } from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
 
@@ -113,7 +114,7 @@ const withdrawSolendStrategy = async (
       manager: payer,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
@@ -194,7 +195,7 @@ const withdrawMarginfiStrategy = async (
       manager: payer,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
@@ -301,7 +302,7 @@ const withdrawKlendStrategy = async (
       manager: payer,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
@@ -415,7 +416,7 @@ const withdrawDriftStrategy = async (
       manager: payer,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },

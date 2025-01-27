@@ -25,6 +25,7 @@ export const managerFilePath = "/path/to/manager.json";
 // ONLY NEEDED FOR DEPOSIT VAULT, WITHDRAW VAULT, DIRECT WITHDRAW STRATEGY
 export const userFilePath = "/path/to/user.json";
 export const assetMintAddress = "";
+export const assetTokenProgram = ""; // TOKEN_PROGRAM_ID or TOKEN_2022_PROGRAM_ID
 export const heliusRpcUrl = "";
 
 // TO FILL UP AFTER INIT VAULT

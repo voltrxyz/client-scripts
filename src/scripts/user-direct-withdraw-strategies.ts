@@ -22,6 +22,7 @@ import {
 } from "@voltr/vault-sdk";
 import {
   assetMintAddress,
+  assetTokenProgram,
   heliusRpcUrl,
   marginfiAccount,
   userFilePath,
@@ -114,7 +115,7 @@ const withdrawSolendStrategy = async (
       user,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
@@ -194,7 +195,7 @@ const withdrawMarginfiStrategy = async (
       user,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
@@ -300,7 +301,7 @@ const withdrawKlendStrategy = async (
       user,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
@@ -410,7 +411,7 @@ const withdrawDriftStrategy = async (
       user,
       vault,
       vaultAssetMint,
-      assetTokenProgram: TOKEN_PROGRAM_ID,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
       remainingAccounts: [
         { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
