@@ -1,10 +1,17 @@
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import * as fs from "fs";
 import { BN } from "@coral-xyz/anchor";
 import { sendAndConfirmOptimisedTx } from "../helper";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
+  createCloseAccountInstruction,
   getAssociatedTokenAddressSync,
+  NATIVE_MINT,
 } from "@solana/spl-token";
 import { VoltrClient } from "@voltr/vault-sdk";
 import {
@@ -30,6 +37,7 @@ const vc = new VoltrClient(connection);
 const withdrawAmount = new BN(withdrawAmountVault);
 
 const withdrawVaultHandler = async () => {
+  let ixs: TransactionInstruction[] = [];
   const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
   const createUserAssetAtaIx =
     createAssociatedTokenAccountIdempotentInstruction(
@@ -38,18 +46,28 @@ const withdrawVaultHandler = async () => {
       user,
       vaultAssetMint
     );
+  ixs.push(createUserAssetAtaIx);
+
   const withdrawVaultIx = await vc.createWithdrawVaultIx(withdrawAmount, {
     vault,
     userAuthority: user,
     vaultAssetMint,
     assetTokenProgram: new PublicKey(assetTokenProgram),
   });
+  ixs.push(withdrawVaultIx);
 
-  const txSig = await sendAndConfirmOptimisedTx(
-    [createUserAssetAtaIx, withdrawVaultIx],
-    heliusRpcUrl,
-    userKp
-  );
+  if (vaultAssetMint.equals(NATIVE_MINT)) {
+    // Create close account instruction to convert wSOL back to SOL
+    const closeWsolAccountIx = createCloseAccountInstruction(
+      userAssetAta, // Account to close
+      user, // Destination account (SOL will be sent here)
+      user, // Authority
+      [] // No multisig signers
+    );
+    ixs.push(closeWsolAccountIx);
+  }
+
+  const txSig = await sendAndConfirmOptimisedTx(ixs, heliusRpcUrl, userKp);
   console.log("Withdraw Vault Tx Sig: ", txSig);
 };
 
