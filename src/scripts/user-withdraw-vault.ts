@@ -11,9 +11,9 @@ import {
   userFilePath,
   vaultAddress,
   assetMintAddress,
-  withdrawAmountPerStrategy,
   heliusRpcUrl,
   assetTokenProgram,
+  withdrawAmountVault,
 } from "../variables";
 
 const userKpFile = fs.readFileSync(userFilePath, "utf-8");
@@ -27,7 +27,7 @@ const vaultAssetMint = new PublicKey(assetMintAddress);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
-const withdrawAmount = new BN(withdrawAmountPerStrategy);
+const withdrawAmount = new BN(withdrawAmountVault);
 
 const withdrawVaultHandler = async () => {
   const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);

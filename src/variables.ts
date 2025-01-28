@@ -41,5 +41,5 @@ export const withdrawAmountPerStrategy = -1;
 
 // TAKE INTO ACCOUNT TOKEN DECIMALS 1_000_000 = 1 USDC (6 DECIMALS) LP is ALWAYS 9 DECIMALS
 // ONLY NEEDED FOR DEPOSIT VAULT, WITHDRAW VAULT, DIRECT WITHDRAW STRATEGY
-export const depositAmount = -1;
-export const withdrawAmount = -1;
+export const depositAmountVault = -1;
+export const withdrawAmountVault = -1;
