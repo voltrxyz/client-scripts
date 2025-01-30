@@ -9,8 +9,10 @@ import {
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createAssociatedTokenAccountInstruction,
+  createCloseAccountInstruction,
   getAccount,
   getAssociatedTokenAddressSync,
+  NATIVE_MINT,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { sendAndConfirmOptimisedTx } from "../helper";
@@ -53,6 +55,17 @@ const withdrawSolendStrategy = async (
   pythOracle: PublicKey,
   switchboardOracle: PublicKey
 ) => {
+  let transactionIxs: TransactionInstruction[] = [];
+  const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
+  const createUserAssetAtaIx =
+    createAssociatedTokenAccountIdempotentInstruction(
+      user,
+      userAssetAta,
+      user,
+      vaultAssetMint
+    );
+  transactionIxs.push(createUserAssetAtaIx);
+
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
     DEFAULT_ADAPTOR_PROGRAM_ID
@@ -69,8 +82,6 @@ const withdrawSolendStrategy = async (
   const vaultCollateralAtaAccount = await connection.getAccountInfo(
     vaultCollateralAta
   );
-
-  let transactionIxs: TransactionInstruction[] = [];
   if (!vaultCollateralAtaAccount) {
     const createVaultCollateralAtaIx =
       createAssociatedTokenAccountIdempotentInstruction(
@@ -134,6 +145,17 @@ const withdrawSolendStrategy = async (
 
   transactionIxs.push(createWithdrawStrategyIx);
 
+  if (vaultAssetMint.equals(NATIVE_MINT)) {
+    // Create close account instruction to convert wSOL back to SOL
+    const closeWsolAccountIx = createCloseAccountInstruction(
+      userAssetAta, // Account to close
+      user, // Destination account (SOL will be sent here)
+      user, // Authority
+      [] // No multisig signers
+    );
+    transactionIxs.push(closeWsolAccountIx);
+  }
+
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
     heliusRpcUrl,
@@ -149,6 +171,17 @@ const withdrawMarginfiStrategy = async (
   marginfiGroup: PublicKey,
   oracle: PublicKey
 ) => {
+  let transactionIxs: TransactionInstruction[] = [];
+  const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
+  const createUserAssetAtaIx =
+    createAssociatedTokenAccountIdempotentInstruction(
+      user,
+      userAssetAta,
+      user,
+      vaultAssetMint
+    );
+  transactionIxs.push(createUserAssetAtaIx);
+
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [Buffer.from("liquidity_vault"), bank.toBuffer()],
     protocolProgram
@@ -160,8 +193,6 @@ const withdrawMarginfiStrategy = async (
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
-
-  let transactionIxs: TransactionInstruction[] = [];
 
   const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
     vaultAssetMint,
@@ -212,6 +243,17 @@ const withdrawMarginfiStrategy = async (
 
   transactionIxs.push(createWithdrawStrategyIx);
 
+  if (vaultAssetMint.equals(NATIVE_MINT)) {
+    // Create close account instruction to convert wSOL back to SOL
+    const closeWsolAccountIx = createCloseAccountInstruction(
+      userAssetAta, // Account to close
+      user, // Destination account (SOL will be sent here)
+      user, // Authority
+      [] // No multisig signers
+    );
+    transactionIxs.push(closeWsolAccountIx);
+  }
+
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
     heliusRpcUrl,
@@ -226,6 +268,17 @@ const withdrawKlendStrategy = async (
   reserve: PublicKey,
   scopePrices: PublicKey
 ) => {
+  let transactionIxs: TransactionInstruction[] = [];
+  const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
+  const createUserAssetAtaIx =
+    createAssociatedTokenAccountIdempotentInstruction(
+      user,
+      userAssetAta,
+      user,
+      vaultAssetMint
+    );
+  transactionIxs.push(createUserAssetAtaIx);
+
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [
       Buffer.from("reserve_liq_supply"),
@@ -258,7 +311,7 @@ const withdrawKlendStrategy = async (
   const userDestinationCollateralAccount = await connection.getAccountInfo(
     userDestinationCollateral
   );
-  let transactionIxs: TransactionInstruction[] = [];
+
   if (!userDestinationCollateralAccount) {
     const createUserDestinationCollateralIx =
       createAssociatedTokenAccountIdempotentInstruction(
@@ -330,6 +383,17 @@ const withdrawKlendStrategy = async (
 
   transactionIxs.push(createWithdrawStrategyIx);
 
+  if (vaultAssetMint.equals(NATIVE_MINT)) {
+    // Create close account instruction to convert wSOL back to SOL
+    const closeWsolAccountIx = createCloseAccountInstruction(
+      userAssetAta, // Account to close
+      user, // Destination account (SOL will be sent here)
+      user, // Authority
+      [] // No multisig signers
+    );
+    transactionIxs.push(closeWsolAccountIx);
+  }
+
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
     heliusRpcUrl,
@@ -344,6 +408,17 @@ const withdrawDriftStrategy = async (
   marketIndex: BN,
   oracle: PublicKey
 ) => {
+  let transactionIxs: TransactionInstruction[] = [];
+  const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
+  const createUserAssetAtaIx =
+    createAssociatedTokenAccountIdempotentInstruction(
+      user,
+      userAssetAta,
+      user,
+      vaultAssetMint
+    );
+  transactionIxs.push(createUserAssetAtaIx);
+
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [
       Buffer.from("spot_market_vault"),
@@ -375,8 +450,6 @@ const withdrawDriftStrategy = async (
     [Buffer.from("spot_market"), marketIndex.toArrayLike(Buffer, "le", 2)],
     protocolProgram
   );
-
-  let transactionIxs: TransactionInstruction[] = [];
 
   const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
     vaultAssetMint,
@@ -429,6 +502,17 @@ const withdrawDriftStrategy = async (
   );
 
   transactionIxs.push(createWithdrawStrategyIx);
+
+  if (vaultAssetMint.equals(NATIVE_MINT)) {
+    // Create close account instruction to convert wSOL back to SOL
+    const closeWsolAccountIx = createCloseAccountInstruction(
+      userAssetAta, // Account to close
+      user, // Destination account (SOL will be sent here)
+      user, // Authority
+      [] // No multisig signers
+    );
+    transactionIxs.push(closeWsolAccountIx);
+  }
 
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
