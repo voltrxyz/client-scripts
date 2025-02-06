@@ -36,10 +36,12 @@ export const marginfiAccount = "";
 
 // TAKE INTO ACCOUNT TOKEN DECIMALS 1_000_000 = 1 USDC (6 DECIMALS) LP is ALWAYS 9 DECIMALS
 // ONLY NEEDED FOR DEPOSIT STRATEGY, WITHDRAW STRATEGY
-export const depositAmountPerStrategy = -1;
-export const withdrawAmountPerStrategy = -1;
+export const depositAssetAmountPerStrategy = -1;
+export const withdrawAssetAmountPerStrategy = -1;
+export const directWithdrawLpAmountPerStrategy = -1;
 
 // TAKE INTO ACCOUNT TOKEN DECIMALS 1_000_000 = 1 USDC (6 DECIMALS) LP is ALWAYS 9 DECIMALS
 // ONLY NEEDED FOR DEPOSIT VAULT, WITHDRAW VAULT, DIRECT WITHDRAW STRATEGY
-export const depositAmountVault = -1;
-export const withdrawAmountVault = -1;
+export const depositAssetAmountVault = -1;
+export const withdrawAssetAmountVault = -1;
+export const withdrawLpAmountVault = -1;

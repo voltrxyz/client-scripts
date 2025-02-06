@@ -21,7 +21,7 @@ import {
   assetMintAddress,
   heliusRpcUrl,
   assetTokenProgram,
-  depositAmountVault,
+  depositAssetAmountVault,
 } from "../variables";
 
 const userKpFile = fs.readFileSync(userFilePath, "utf-8");
@@ -35,7 +35,7 @@ const vaultAssetMint = new PublicKey(assetMintAddress);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
-const depositAmount = new BN(depositAmountVault);
+const depositAmount = new BN(depositAssetAmountVault);
 
 const depositVaultHandler = async () => {
   let ixs: TransactionInstruction[] = [];

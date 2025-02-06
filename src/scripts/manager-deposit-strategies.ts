@@ -21,7 +21,7 @@ import {
 } from "@voltr/vault-sdk";
 import {
   assetMintAddress,
-  depositAmountPerStrategy,
+  depositAssetAmountPerStrategy,
   heliusRpcUrl,
   managerFilePath,
   marginfiAccount,
@@ -41,7 +41,7 @@ const vaultAssetMint = new PublicKey(assetMintAddress);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
-const depositAmount = new BN(depositAmountPerStrategy);
+const depositAmount = new BN(depositAssetAmountPerStrategy);
 
 const depositSolendStrategy = async (
   protocolProgram: PublicKey,

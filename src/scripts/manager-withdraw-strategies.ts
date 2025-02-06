@@ -25,7 +25,7 @@ import {
   marginfiAccount,
   heliusRpcUrl,
   vaultAddress,
-  withdrawAmountPerStrategy,
+  withdrawAssetAmountPerStrategy,
   assetMintAddress,
   assetTokenProgram,
 } from "../variables";
@@ -42,7 +42,7 @@ const vaultAssetMint = new PublicKey(assetMintAddress);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
-const withdrawAmount = new BN(withdrawAmountPerStrategy);
+const withdrawAmount = new BN(withdrawAssetAmountPerStrategy);
 
 const withdrawSolendStrategy = async (
   protocolProgram: PublicKey,

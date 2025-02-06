@@ -26,7 +26,7 @@ const findAndFetchStrategyPosition = async (
   return strategyAccount.positionValue;
 };
 
-const getSolendStrategyPosition = async (counterPartyTa: PublicKey) => {
+export const getSolendStrategyPosition = async (counterPartyTa: PublicKey) => {
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
     DEFAULT_ADAPTOR_PROGRAM_ID
@@ -35,7 +35,7 @@ const getSolendStrategyPosition = async (counterPartyTa: PublicKey) => {
   return findAndFetchStrategyPosition(vault, strategy);
 };
 
-const getMarginfiStrategyPosition = async (
+export const getMarginfiStrategyPosition = async (
   protocolProgram: PublicKey,
   bank: PublicKey
 ) => {
@@ -52,7 +52,7 @@ const getMarginfiStrategyPosition = async (
   return findAndFetchStrategyPosition(vault, strategy);
 };
 
-const getKlendStrategyPosition = async (
+export const getKlendStrategyPosition = async (
   protocolProgram: PublicKey,
   lendingMarket: PublicKey
 ) => {
@@ -73,7 +73,7 @@ const getKlendStrategyPosition = async (
   return findAndFetchStrategyPosition(vault, strategy);
 };
 
-const getDriftStrategyPosition = async (
+export const getDriftStrategyPosition = async (
   protocolProgram: PublicKey,
   marketIndex: BN
 ) => {
@@ -113,7 +113,7 @@ const main = async () => {
     ),
     getDriftStrategyPosition(
       new PublicKey(PROTOCOL_CONSTANTS.DRIFT.PROGRAM_ID),
-      new BN(PROTOCOL_CONSTANTS.DRIFT.SPOT.SOL.MARKET_INDEX)
+      new BN(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.MARKET_INDEX)
     ),
   ]);
 
