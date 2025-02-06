@@ -12,6 +12,7 @@ import {
   getDriftStrategyPosition,
   getMarginfiStrategyPosition,
   getSolendStrategyPosition,
+  getVaultIdlePosition,
 } from "./all-query-strategy-positions";
 import { BN } from "@coral-xyz/anchor";
 import { PROTOCOL_CONSTANTS } from "../constants";
@@ -34,8 +35,7 @@ const getUserLpShareRatio = async () => {
   const userLpAta = getAssociatedTokenAddressSync(vaultLpMint, user);
   const userLpAtaAccount = await getAccount(connection, userLpAta);
   const userLpAmount = userLpAtaAccount.amount;
-  const userLpShareRatio = userLpAmount / totalLpSupply;
-  const userLpShareRatioNumber = Number(userLpShareRatio);
+  const userLpShareRatioNumber = Number(userLpAmount) / Number(totalLpSupply);
 
   const [
     allSolendStrategyPosition,
@@ -60,46 +60,39 @@ const getUserLpShareRatio = async () => {
     ),
   ]);
 
-  const vaultAccount = await vc.fetchVaultAccount(vault);
-  const vaultTotalValue = vaultAccount.asset.totalValue;
-  const vaultIdleValue = vaultTotalValue.sub(
+  const vaultIdleValue = await getVaultIdlePosition(
     allSolendStrategyPosition
       .add(allMarginfiStrategyPosition)
       .add(allKlendStrategyPosition)
       .add(allDriftStrategyPosition)
   );
 
-  const userIdlePosition = vaultIdleValue.mul(userLpShareRatioNumber);
-  const userSolendStrategyPosition = allSolendStrategyPosition.mul(
-    userLpShareRatioNumber
+  const userIdlePosition = Math.floor(
+    Number(vaultIdleValue) * userLpShareRatioNumber
   );
-  const userMarginfiStrategyPosition = allMarginfiStrategyPosition.mul(
-    userLpShareRatioNumber
+  const userSolendStrategyPosition = Math.floor(
+    Number(allSolendStrategyPosition) * userLpShareRatioNumber
   );
-  const userKlendStrategyPosition = allKlendStrategyPosition.mul(
-    userLpShareRatioNumber
+  const userMarginfiStrategyPosition = Math.floor(
+    Number(allMarginfiStrategyPosition) * userLpShareRatioNumber
   );
-  const userDriftStrategyPosition = allDriftStrategyPosition.mul(
-    userLpShareRatioNumber
+  const userKlendStrategyPosition = Math.floor(
+    Number(allKlendStrategyPosition) * userLpShareRatioNumber
+  );
+  const userDriftStrategyPosition = Math.floor(
+    Number(allDriftStrategyPosition) * userLpShareRatioNumber
   );
 
-  console.log("userIdlePosition: ", userIdlePosition.toString());
+  console.log("USER POSITIONS--------------------------------");
+
+  console.log("Idle position value: ", userIdlePosition.toString());
+  console.log("Solend position value: ", userSolendStrategyPosition.toString());
   console.log(
-    "userSolendStrategyPosition: ",
-    userSolendStrategyPosition.toString()
-  );
-  console.log(
-    "userMarginfiStrategyPosition: ",
+    "Marginfi position value: ",
     userMarginfiStrategyPosition.toString()
   );
-  console.log(
-    "userKlendStrategyPosition: ",
-    userKlendStrategyPosition.toString()
-  );
-  console.log(
-    "userDriftStrategyPosition: ",
-    userDriftStrategyPosition.toString()
-  );
+  console.log("Klend position value: ", userKlendStrategyPosition.toString());
+  console.log("Drift position value: ", userDriftStrategyPosition.toString());
 };
 
 getUserLpShareRatio();

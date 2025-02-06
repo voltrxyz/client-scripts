@@ -93,6 +93,13 @@ export const getDriftStrategyPosition = async (
   return findAndFetchStrategyPosition(vault, strategy);
 };
 
+export const getVaultIdlePosition = async (summedPositionValues: BN) => {
+  const vaultAccount = await vc.fetchVaultAccount(vault);
+  const vaultTotalValue = vaultAccount.asset.totalValue;
+  const vaultIdleValue = vaultTotalValue.sub(summedPositionValues);
+  return vaultIdleValue;
+};
+
 const main = async () => {
   const [
     solendStrategyPosition,
@@ -117,20 +124,20 @@ const main = async () => {
     ),
   ]);
 
-  const vaultAccount = await vc.fetchVaultAccount(vault);
-  const vaultTotalValue = vaultAccount.asset.totalValue;
+  console.log("VAULT TOTAL POSITIONS--------------------------------");
 
-  console.log(
-    "vaultTotalValue including idle tokens: ",
-    vaultTotalValue.toString()
+  const vaultIdleValue = await getVaultIdlePosition(
+    solendStrategyPosition
+      .add(marginfiStrategyPosition)
+      .add(klendStrategyPosition)
+      .add(driftStrategyPosition)
   );
-  console.log("solendStrategyPosition: ", solendStrategyPosition.toString());
-  console.log(
-    "marginfiStrategyPosition: ",
-    marginfiStrategyPosition.toString()
-  );
-  console.log("klendStrategyPosition: ", klendStrategyPosition.toString());
-  console.log("driftStrategyPosition: ", driftStrategyPosition.toString());
+
+  console.log("Idle position value: ", vaultIdleValue.toString());
+  console.log("Solend position value: ", solendStrategyPosition.toString());
+  console.log("Marginfi position value: ", marginfiStrategyPosition.toString());
+  console.log("Klend position value: ", klendStrategyPosition.toString());
+  console.log("Drift position value: ", driftStrategyPosition.toString());
 };
 
 main();
