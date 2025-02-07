@@ -121,7 +121,7 @@ const withdrawSolendStrategy = async (
   ).then((account) => account.owner);
 
   const createWithdrawStrategyIx = await vc.createDirectWithdrawStrategyIx(
-    { withdrawAmount },
+    { amount: withdrawAmount, isAmountInLp: true, isWithdrawAll: false },
     {
       user,
       vault,
@@ -222,7 +222,7 @@ const withdrawMarginfiStrategy = async (
   ).then((account) => account.owner);
 
   const createWithdrawStrategyIx = await vc.createDirectWithdrawStrategyIx(
-    { withdrawAmount },
+    { amount: withdrawAmount, isAmountInLp: true, isWithdrawAll: false },
     {
       user,
       vault,
@@ -351,7 +351,7 @@ const withdrawKlendStrategy = async (
   ).then((account) => account.owner);
 
   const createWithdrawStrategyIx = await vc.createDirectWithdrawStrategyIx(
-    { withdrawAmount },
+    { amount: withdrawAmount, isAmountInLp: true, isWithdrawAll: false },
     {
       user,
       vault,
@@ -481,7 +481,9 @@ const withdrawDriftStrategy = async (
 
   const createWithdrawStrategyIx = await vc.createDirectWithdrawStrategyIx(
     {
-      withdrawAmount,
+      amount: withdrawAmount,
+      isAmountInLp: true,
+      isWithdrawAll: false,
     },
     {
       user,

@@ -39,7 +39,11 @@ const vc = new VoltrClient(connection);
 const withdrawLpAmount = new BN(withdrawLpAmountVault);
 const withdrawAssetAmount = new BN(withdrawAssetAmountVault);
 
-const withdrawVaultHandler = async (withdrawLpAmount: BN) => {
+const withdrawVaultHandler = async (
+  withdrawAmount: BN,
+  isAmountInLp: boolean,
+  isWithdrawAll: boolean
+) => {
   let ixs: TransactionInstruction[] = [];
   const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
   const createUserAssetAtaIx =
@@ -51,12 +55,15 @@ const withdrawVaultHandler = async (withdrawLpAmount: BN) => {
     );
   ixs.push(createUserAssetAtaIx);
 
-  const withdrawVaultIx = await vc.createWithdrawVaultIx(withdrawLpAmount, {
-    vault,
-    userAuthority: user,
-    vaultAssetMint,
-    assetTokenProgram: new PublicKey(assetTokenProgram),
-  });
+  const withdrawVaultIx = await vc.createWithdrawVaultIx(
+    { amount: withdrawAmount, isAmountInLp, isWithdrawAll },
+    {
+      vault,
+      userAuthority: user,
+      vaultAssetMint,
+      assetTokenProgram: new PublicKey(assetTokenProgram),
+    }
+  );
   ixs.push(withdrawVaultIx);
 
   if (vaultAssetMint.equals(NATIVE_MINT)) {
@@ -75,43 +82,19 @@ const withdrawVaultHandler = async (withdrawLpAmount: BN) => {
 };
 
 const withdrawVaultInLpAmountHandler = async (withdrawLpAmount: BN) => {
-  await withdrawVaultHandler(withdrawLpAmount);
-};
-
-const calculateLpForWithdraw = async (desiredAssetAmount: BN): Promise<BN> => {
-  // Fetch vault data and LP supply info.
-  const vaultAccount = await vc.fetchVaultAccount(vault);
-  const totalValue = vaultAccount.asset.totalValue;
-
-  const lpMint = vc.findVaultLpMint(vault);
-  const lp = await getMint(connection, lpMint);
-  const lpSupply = new BN(lp.supply.toString());
-
-  // Validate inputs.
-  if (lpSupply.lte(new BN(0))) throw new Error("Invalid LP supply");
-  if (totalValue.lte(new BN(0))) throw new Error("Invalid total assets");
-
-  // Reverse engineer the LP tokens required to withdraw the desired asset amount.
-  //
-  // Original calculation:
-  //   withdrawnAsset = ((lpAmount * totalValue) / lpSupply) * ((10000 - feeBps) / 10000)
-  const feeFactor = new BN(10000 - REDEMPTION_FEE_PERCENTAGE_BPS);
-  const numerator = desiredAssetAmount.mul(lpSupply).mul(new BN(10000));
-  const denominator = totalValue.mul(feeFactor);
-
-  // Perform division and round up if there is a remainder.
-  let lpNeeded = numerator.div(denominator);
-  if (!numerator.mod(denominator).eq(new BN(0))) {
-    lpNeeded = lpNeeded.add(new BN(1));
-  }
-
-  return lpNeeded;
+  await withdrawVaultHandler(withdrawLpAmount, true, false);
 };
 
 const withdrawVaultInAssetAmountHandler = async (withdrawAssetAmount: BN) => {
-  const lpAmount = await calculateLpForWithdraw(withdrawAssetAmount);
-  await withdrawVaultHandler(lpAmount);
+  await withdrawVaultHandler(withdrawAssetAmount, false, false);
+};
+
+const withdrawVaultAllHandler = async () => {
+  // withdrawAmount can be any amount
+  // isAmountInLp can be true or false
+  await withdrawVaultHandler(new BN(0), false, true);
 };
 
 withdrawVaultInLpAmountHandler(withdrawLpAmount);
 withdrawVaultInAssetAmountHandler(withdrawAssetAmount);
+withdrawVaultAllHandler();
