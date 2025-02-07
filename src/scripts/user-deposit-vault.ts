@@ -10,6 +10,7 @@ import { BN } from "@coral-xyz/anchor";
 import { sendAndConfirmOptimisedTx } from "../helper";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
+  createCloseAccountInstruction,
   createSyncNativeInstruction,
   getAssociatedTokenAddressSync,
   NATIVE_MINT,
@@ -39,13 +40,13 @@ const depositAmount = new BN(depositAssetAmountVault);
 
 const depositVaultHandler = async () => {
   let ixs: TransactionInstruction[] = [];
+  const userAssetAta = getAssociatedTokenAddressSync(NATIVE_MINT, user);
   if (vaultAssetMint.equals(NATIVE_MINT)) {
     // Find the WSOL Associated Token Account (ATA)
-    const userWsolAta = getAssociatedTokenAddressSync(NATIVE_MINT, user);
     // Create WSOL ATA instruction
     const createWsolAtaIx = createAssociatedTokenAccountIdempotentInstruction(
       user,
-      userWsolAta,
+      userAssetAta,
       user,
       NATIVE_MINT
     );
@@ -53,12 +54,12 @@ const depositVaultHandler = async () => {
     // Transfer SOL to WSOL ATA instruction
     const transferSolToWsolIx = SystemProgram.transfer({
       fromPubkey: user,
-      toPubkey: userWsolAta,
+      toPubkey: userAssetAta,
       lamports: depositAmount.toNumber(),
     });
 
     // Sync native (convert SOL to WSOL) instruction
-    const syncNativeIx = createSyncNativeInstruction(userWsolAta);
+    const syncNativeIx = createSyncNativeInstruction(userAssetAta);
 
     ixs.push(createWsolAtaIx, transferSolToWsolIx, syncNativeIx);
   }
@@ -80,6 +81,17 @@ const depositVaultHandler = async () => {
     assetTokenProgram: new PublicKey(assetTokenProgram),
   });
   ixs.push(depositVaultIx);
+
+  if (vaultAssetMint.equals(NATIVE_MINT)) {
+    // Create close account instruction to convert wSOL back to SOL
+    const closeWsolAccountIx = createCloseAccountInstruction(
+      userAssetAta, // Account to close
+      user, // Destination account (SOL will be sent here)
+      user, // Authority
+      [] // No multisig signers
+    );
+    ixs.push(closeWsolAccountIx);
+  }
 
   const txSig = await sendAndConfirmOptimisedTx(ixs, heliusRpcUrl, userKp);
   console.log("Deposit Vault Tx Sig: ", txSig);
