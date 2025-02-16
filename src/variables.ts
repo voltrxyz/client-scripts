@@ -5,10 +5,11 @@ import { VaultConfig, VaultParams } from "@voltr/vault-sdk";
 export const vaultConfig: VaultConfig = {
   maxCap: new BN(0), // 100K USDC (10^6 Decimals)
   startAtTs: new BN(0),
-  managerPerformanceFee: -1, // 500 = 5% in basis points
-  adminPerformanceFee: -1, //
-  managerManagementFee: -1, //
-  adminManagementFee: -1, //
+  managerPerformanceFee: 500, // 500 = 5% in basis points
+  adminPerformanceFee: 500, // 500 = 5% in basis points
+  managerManagementFee: 0, // management fee not yet implemented
+  adminManagementFee: 0, // management fee not yet implemented
+  lockedProfitDegradationDuration: new BN(0),
 };
 
 // ONLY NEEDED FOR INIT VAULT

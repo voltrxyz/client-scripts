@@ -15,7 +15,7 @@ import { sendAndConfirmOptimisedTx } from "../helper";
 import { BN } from "@coral-xyz/anchor";
 import * as fs from "fs";
 import {
-  DEFAULT_ADAPTOR_PROGRAM_ID,
+  LENDING_ADAPTOR_PROGRAM_ID,
   SEEDS,
   VoltrClient,
 } from "@voltr/vault-sdk";
@@ -45,7 +45,7 @@ const initSolendStrategy = async (
 ) => {
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
@@ -99,7 +99,7 @@ const initMarginfiStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const marginfiAccountKp = Keypair.generate();
@@ -145,7 +145,7 @@ const initKlendStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
@@ -202,7 +202,7 @@ const initDriftStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);

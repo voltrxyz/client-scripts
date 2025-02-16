@@ -3,7 +3,7 @@ import { sendAndConfirmOptimisedTx } from "../helper";
 import { BN } from "@coral-xyz/anchor";
 import * as fs from "fs";
 import {
-  DEFAULT_ADAPTOR_PROGRAM_ID,
+  LENDING_ADAPTOR_PROGRAM_ID,
   SEEDS,
   VoltrClient,
 } from "@voltr/vault-sdk";
@@ -29,7 +29,7 @@ const vc = new VoltrClient(connection);
 const initDirectWithdrawSolendStrategy = async (counterPartyTa: PublicKey) => {
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const initializeDirectWithdrawStrategyIx =
@@ -59,7 +59,7 @@ const initDirectWithdrawMarginfiStrategy = async (
   );
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
   const initializeDirectWithdrawStrategyIx =
     await vc.createInitializeDirectWithdrawStrategyIx(
@@ -93,7 +93,7 @@ const initDirectWithdrawKlendStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const initializeDirectWithdrawStrategyIx =
@@ -126,7 +126,7 @@ const initDirectWithdrawDriftStrategy = async (
   );
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const initializeDirectWithdrawStrategyIx =
