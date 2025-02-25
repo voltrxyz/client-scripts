@@ -12,10 +12,10 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { sendAndConfirmOptimisedTx } from "../helper";
+import { sendAndConfirmOptimisedTx } from "../utils/helper";
 import { BN } from "@coral-xyz/anchor";
 import {
-  DEFAULT_ADAPTOR_PROGRAM_ID,
+  LENDING_ADAPTOR_PROGRAM_ID,
   SEEDS,
   VoltrClient,
 } from "@voltr/vault-sdk";
@@ -54,7 +54,7 @@ const depositSolendStrategy = async (
 ) => {
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const [lendingMarketAuthority] = PublicKey.findProgramAddressSync(
@@ -156,7 +156,7 @@ const depositMarginfiStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
@@ -234,7 +234,7 @@ const depositKlendStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
@@ -346,7 +346,7 @@ const depositDriftStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);

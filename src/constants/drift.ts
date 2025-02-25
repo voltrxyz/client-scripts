@@ -9,7 +9,7 @@ export const DRIFT = {
     },
     USDC: {
       MARKET_INDEX: 0,
-      ORACLE: "En8hkHLkRe9d9DraYmBTrus518BvmVH448YcvmrFM6Ce",
+      ORACLE: "9VCioxmni2gDLv11qufWzT3RDERhQE4iY5Gf7NTfYyAV",
     },
     USDT: {
       MARKET_INDEX: 5,

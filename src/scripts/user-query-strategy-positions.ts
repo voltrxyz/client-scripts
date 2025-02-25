@@ -7,15 +7,15 @@ import {
 } from "@solana/spl-token";
 import { VoltrClient } from "@voltr/vault-sdk";
 import { userFilePath, vaultAddress, heliusRpcUrl } from "../variables";
+import { BN } from "@coral-xyz/anchor";
+import { PROTOCOL_CONSTANTS } from "../constants";
 import {
-  getKlendStrategyPosition,
   getDriftStrategyPosition,
+  getKlendStrategyPosition,
   getMarginfiStrategyPosition,
   getSolendStrategyPosition,
   getVaultIdlePosition,
-} from "./all-query-strategy-positions";
-import { BN } from "@coral-xyz/anchor";
-import { PROTOCOL_CONSTANTS } from "../constants";
+} from "../utils/get-strategy-position-value";
 
 const userKpFile = fs.readFileSync(userFilePath, "utf-8");
 const userKpData = JSON.parse(userKpFile);

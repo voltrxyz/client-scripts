@@ -6,7 +6,7 @@ import {
 } from "@solana/web3.js";
 import * as fs from "fs";
 import { BN } from "@coral-xyz/anchor";
-import { sendAndConfirmOptimisedTx } from "../helper";
+import { sendAndConfirmOptimisedTx } from "../utils/helper";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createCloseAccountInstruction,

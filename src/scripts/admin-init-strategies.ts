@@ -11,7 +11,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { sendAndConfirmOptimisedTx } from "../helper";
+import { sendAndConfirmOptimisedTx } from "../utils/helper";
 import { BN } from "@coral-xyz/anchor";
 import * as fs from "fs";
 import {

@@ -1,5 +1,5 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { sendAndConfirmOptimisedTx } from "../helper";
+import { sendAndConfirmOptimisedTx } from "../utils/helper";
 import { BN } from "@coral-xyz/anchor";
 import * as fs from "fs";
 import {

@@ -15,10 +15,10 @@ import {
   NATIVE_MINT,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { sendAndConfirmOptimisedTx } from "../helper";
+import { sendAndConfirmOptimisedTx } from "../utils/helper";
 import { BN } from "@coral-xyz/anchor";
 import {
-  DEFAULT_ADAPTOR_PROGRAM_ID,
+  LENDING_ADAPTOR_PROGRAM_ID,
   SEEDS,
   VoltrClient,
 } from "@voltr/vault-sdk";
@@ -68,7 +68,7 @@ const withdrawSolendStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
@@ -189,7 +189,7 @@ const withdrawMarginfiStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
@@ -290,7 +290,7 @@ const withdrawKlendStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
@@ -430,7 +430,7 @@ const withdrawDriftStrategy = async (
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
-    DEFAULT_ADAPTOR_PROGRAM_ID
+    LENDING_ADAPTOR_PROGRAM_ID
   );
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
