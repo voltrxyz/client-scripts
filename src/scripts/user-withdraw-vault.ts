@@ -1,3 +1,4 @@
+// NOTE: THIS ASSUMES THE USER HAS REQUESTED A WITHDRAWAL, THROWS ERROR IF NOT
 import {
   Connection,
   Keypair,
@@ -5,24 +6,20 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import * as fs from "fs";
-import { BN } from "@coral-xyz/anchor";
 import { sendAndConfirmOptimisedTx } from "../utils/helper";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createCloseAccountInstruction,
   getAssociatedTokenAddressSync,
-  getMint,
   NATIVE_MINT,
 } from "@solana/spl-token";
-import { REDEMPTION_FEE_PERCENTAGE_BPS, VoltrClient } from "@voltr/vault-sdk";
+import { VoltrClient } from "@voltr/vault-sdk";
 import {
   userFilePath,
   vaultAddress,
   assetMintAddress,
   heliusRpcUrl,
   assetTokenProgram,
-  withdrawLpAmountVault,
-  withdrawAssetAmountVault,
 } from "../variables";
 
 const userKpFile = fs.readFileSync(userFilePath, "utf-8");
@@ -36,14 +33,8 @@ const vaultAssetMint = new PublicKey(assetMintAddress);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
-const withdrawLpAmount = new BN(withdrawLpAmountVault);
-const withdrawAssetAmount = new BN(withdrawAssetAmountVault);
 
-const withdrawVaultHandler = async (
-  withdrawAmount: BN,
-  isAmountInLp: boolean,
-  isWithdrawAll: boolean
-) => {
+const withdrawVaultHandler = async () => {
   let ixs: TransactionInstruction[] = [];
   const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
   const createUserAssetAtaIx =
@@ -55,15 +46,12 @@ const withdrawVaultHandler = async (
     );
   ixs.push(createUserAssetAtaIx);
 
-  const withdrawVaultIx = await vc.createWithdrawVaultIx(
-    { amount: withdrawAmount, isAmountInLp, isWithdrawAll },
-    {
-      vault,
-      userAuthority: user,
-      vaultAssetMint,
-      assetTokenProgram: new PublicKey(assetTokenProgram),
-    }
-  );
+  const withdrawVaultIx = await vc.createWithdrawVaultIx({
+    vault,
+    userAuthority: user,
+    vaultAssetMint,
+    assetTokenProgram: new PublicKey(assetTokenProgram),
+  });
   ixs.push(withdrawVaultIx);
 
   if (vaultAssetMint.equals(NATIVE_MINT)) {
@@ -81,20 +69,4 @@ const withdrawVaultHandler = async (
   console.log("Withdraw Vault Tx Sig: ", txSig);
 };
 
-const withdrawVaultInLpAmountHandler = async (withdrawLpAmount: BN) => {
-  await withdrawVaultHandler(withdrawLpAmount, true, false);
-};
-
-const withdrawVaultInAssetAmountHandler = async (withdrawAssetAmount: BN) => {
-  await withdrawVaultHandler(withdrawAssetAmount, false, false);
-};
-
-const withdrawVaultAllHandler = async () => {
-  // withdrawAmount can be any amount
-  // isAmountInLp can be true or false
-  await withdrawVaultHandler(new BN(0), false, true);
-};
-
-withdrawVaultInLpAmountHandler(withdrawLpAmount);
-withdrawVaultInAssetAmountHandler(withdrawAssetAmount);
-withdrawVaultAllHandler();
+withdrawVaultHandler();

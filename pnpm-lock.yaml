@@ -15,8 +15,8 @@ dependencies:
     specifier: ^1.98.0
     version: 1.98.0
   '@voltr/vault-sdk':
-    specifier: ^0.2.0
-    version: 0.2.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.3)
+    specifier: ^1.0.0
+    version: 1.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.3)
 
 devDependencies:
   '@types/node':
@@ -342,12 +342,13 @@ packages:
       '@types/node': 22.13.1
     dev: false
 
-  /@voltr/vault-sdk@0.2.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.3):
-    resolution: {integrity: sha512-vr8vE63Ax/LQ9uascVi7w+9vAj0HWXa1z3naKHBGJw0ZEi4jVV3eklsZcVdDHfqK6LpmhqbK80KuPsVsBu5cOg==}
+  /@voltr/vault-sdk@1.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.3):
+    resolution: {integrity: sha512-C1tiRUAIOswceXm5ocasAaG5daqlohuyOqyG/sVhipAmJTRQIczhNNVpGiOi1oMDwMaIxL55F7hgpPkjdnlFhA==}
     dependencies:
       '@coral-xyz/anchor': 0.30.1
       '@solana/spl-token': 0.4.12(@solana/web3.js@1.98.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.3)
       '@solana/web3.js': 1.98.0
+      bn.js: 5.2.1
     transitivePeerDependencies:
       - bufferutil
       - encoding

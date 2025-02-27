@@ -1,4 +1,4 @@
-// NOTE: THIS ASSUMES THE USER HAS REQUESTED A WITHDRAWAL, THROWS ERROR IF NOT
+// NOTE: THIS ONLY WORKS IF AND ONLY IF WITHDAWAL WAITING PERIOD IS 0
 import * as fs from "fs";
 import {
   Connection,
@@ -20,6 +20,7 @@ import { sendAndConfirmOptimisedTx } from "../utils/helper";
 import { BN } from "@coral-xyz/anchor";
 import {
   LENDING_ADAPTOR_PROGRAM_ID,
+  RequestWithdrawVaultArgs,
   SEEDS,
   VoltrClient,
 } from "@voltr/vault-sdk";
@@ -30,6 +31,7 @@ import {
   marginfiAccount,
   userFilePath,
   vaultAddress,
+  directWithdrawLpAmountPerStrategy,
 } from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
 
@@ -44,8 +46,54 @@ const vaultAssetMint = new PublicKey(assetMintAddress);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
+const withdrawLpAmountPerStrategy = new BN(directWithdrawLpAmountPerStrategy);
 
-const withdrawSolendStrategy = async (
+const createrequestWithdrawVaultIxs = async (
+  withdrawAmount: BN,
+  isAmountInLp: boolean,
+  isWithdrawAll: boolean
+) => {
+  const vaultLpMint = vc.findVaultLpMint(vault);
+  const requestWithdrawVaultReceipt = vc.findRequestWithdrawVaultReceipt(
+    vault,
+    user
+  );
+  const requestWithdrawLpAta = getAssociatedTokenAddressSync(
+    vaultLpMint,
+    requestWithdrawVaultReceipt,
+    true
+  );
+
+  let ixs: TransactionInstruction[] = [];
+  const createRequestWithdrawLpAtaIx =
+    createAssociatedTokenAccountIdempotentInstruction(
+      user,
+      requestWithdrawLpAta,
+      requestWithdrawVaultReceipt,
+      vaultLpMint
+    );
+  ixs.push(createRequestWithdrawLpAtaIx);
+
+  const requestWithdrawVaultArgs: RequestWithdrawVaultArgs = {
+    amount: withdrawAmount,
+    isAmountInLp,
+    isWithdrawAll,
+  };
+
+  const requestWithdrawVaultIx = await vc.createRequestWithdrawVaultIx(
+    requestWithdrawVaultArgs,
+    {
+      payer: user,
+      userAuthority: user,
+      vault,
+    }
+  );
+  ixs.push(requestWithdrawVaultIx);
+
+  return ixs;
+};
+
+const createWithdrawSolendStrategyIxs = async (
   protocolProgram: PublicKey,
   counterPartyTa: PublicKey,
   lendingMarket: PublicKey,
@@ -155,15 +203,10 @@ const withdrawSolendStrategy = async (
     transactionIxs.push(closeWsolAccountIx);
   }
 
-  const txSig = await sendAndConfirmOptimisedTx(
-    transactionIxs,
-    heliusRpcUrl,
-    userKp
-  );
-  console.log("Solend strategy direct withdrawn with signature:", txSig);
+  return transactionIxs;
 };
 
-const withdrawMarginfiStrategy = async (
+const createWithdrawMarginfiStrategyIxs = async (
   protocolProgram: PublicKey,
   bank: PublicKey,
   marginfiAccount: PublicKey,
@@ -253,15 +296,10 @@ const withdrawMarginfiStrategy = async (
     transactionIxs.push(closeWsolAccountIx);
   }
 
-  const txSig = await sendAndConfirmOptimisedTx(
-    transactionIxs,
-    heliusRpcUrl,
-    userKp
-  );
-  console.log("Marginfi strategy direct withdrawn with signature:", txSig);
+  return transactionIxs;
 };
 
-const withdrawKlendStrategy = async (
+const createWithdrawKlendStrategyIxs = async (
   protocolProgram: PublicKey,
   lendingMarket: PublicKey,
   reserve: PublicKey,
@@ -393,15 +431,10 @@ const withdrawKlendStrategy = async (
     transactionIxs.push(closeWsolAccountIx);
   }
 
-  const txSig = await sendAndConfirmOptimisedTx(
-    transactionIxs,
-    heliusRpcUrl,
-    userKp
-  );
-  console.log("Klend strategy direct withdrawn with signature:", txSig);
+  return transactionIxs;
 };
 
-const withdrawDriftStrategy = async (
+const createWithdrawDriftStrategyIxs = async (
   protocolProgram: PublicKey,
   state: PublicKey,
   marketIndex: BN,
@@ -512,16 +545,16 @@ const withdrawDriftStrategy = async (
     transactionIxs.push(closeWsolAccountIx);
   }
 
-  const txSig = await sendAndConfirmOptimisedTx(
-    transactionIxs,
-    heliusRpcUrl,
-    userKp
-  );
-  console.log("Drift strategy direct withdrawn with signature:", txSig);
+  return transactionIxs;
 };
 
-const main = async () => {
-  await withdrawSolendStrategy(
+const requestAndWithdrawSolendStrategy = async () => {
+  const requestWithdrawVaultIxs = await createrequestWithdrawVaultIxs(
+    withdrawLpAmountPerStrategy,
+    true,
+    false
+  );
+  const withdrawSolendStrategyIxs = await createWithdrawSolendStrategyIxs(
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.COUNTERPARTY_TA),
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.LENDING_MARKET),
@@ -530,26 +563,93 @@ const main = async () => {
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.PYTH_ORACLE),
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.SWITCHBOARD_ORACLE)
   );
-  await withdrawMarginfiStrategy(
+  const requestAndWithdrawSolendStrategyIxs = [
+    ...requestWithdrawVaultIxs,
+    ...withdrawSolendStrategyIxs,
+  ];
+  const txSig = await sendAndConfirmOptimisedTx(
+    requestAndWithdrawSolendStrategyIxs,
+    heliusRpcUrl,
+    userKp
+  );
+  console.log("Request and Withdraw Solend Strategy Tx Sig: ", txSig);
+};
+
+const requestAndWithdrawMarginfiStrategy = async () => {
+  const requestWithdrawVaultIxs = await createrequestWithdrawVaultIxs(
+    withdrawLpAmountPerStrategy,
+    true,
+    false
+  );
+  const withdrawMarginfiStrategyIxs = await createWithdrawMarginfiStrategyIxs(
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.BANK),
     new PublicKey(marginfiAccount),
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.GROUP),
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.ORACLE)
   );
-  await withdrawKlendStrategy(
+  const requestAndWithdrawMarginfiStrategyIxs = [
+    ...requestWithdrawVaultIxs,
+    ...withdrawMarginfiStrategyIxs,
+  ];
+  const txSig = await sendAndConfirmOptimisedTx(
+    requestAndWithdrawMarginfiStrategyIxs,
+    heliusRpcUrl,
+    userKp
+  );
+  console.log("Request and Withdraw Marginfi Strategy Tx Sig: ", txSig);
+};
+
+const requestAndWithdrawKlendStrategy = async () => {
+  const requestWithdrawVaultIxs = await createrequestWithdrawVaultIxs(
+    withdrawLpAmountPerStrategy,
+    true,
+    false
+  );
+  const withdrawKlendStrategyIxs = await createWithdrawKlendStrategyIxs(
     new PublicKey(PROTOCOL_CONSTANTS.KLEND.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.KLEND.MAIN_MARKET.LENDING_MARKET),
     new PublicKey(PROTOCOL_CONSTANTS.KLEND.MAIN_MARKET.USDC.RESERVE),
     new PublicKey(PROTOCOL_CONSTANTS.KLEND.SCOPE_ORACLE)
   );
-  await withdrawDriftStrategy(
+  const requestAndWithdrawKlendStrategyIxs = [
+    ...requestWithdrawVaultIxs,
+    ...withdrawKlendStrategyIxs,
+  ];
+  const txSig = await sendAndConfirmOptimisedTx(
+    requestAndWithdrawKlendStrategyIxs,
+    heliusRpcUrl,
+    userKp
+  );
+  console.log("Request and Withdraw Klend Strategy Tx Sig: ", txSig);
+};
+
+const requestAndWithdrawDriftStrategy = async () => {
+  const requestWithdrawVaultIxs = await createrequestWithdrawVaultIxs(
+    withdrawLpAmountPerStrategy,
+    true,
+    false
+  );
+  const withdrawDriftStrategyIxs = await createWithdrawDriftStrategyIxs(
     new PublicKey(PROTOCOL_CONSTANTS.DRIFT.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.STATE),
     new BN(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.MARKET_INDEX),
     new BN(PROTOCOL_CONSTANTS.DRIFT.SUB_ACCOUNT_ID),
     new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.ORACLE)
   );
+  const requestAndWithdrawDriftStrategyIxs = [
+    ...requestWithdrawVaultIxs,
+    ...withdrawDriftStrategyIxs,
+  ];
+  const txSig = await sendAndConfirmOptimisedTx(
+    requestAndWithdrawDriftStrategyIxs,
+    heliusRpcUrl,
+    userKp
+  );
+  console.log("Request and Withdraw Drift Strategy Tx Sig: ", txSig);
 };
 
-main();
+requestAndWithdrawSolendStrategy();
+requestAndWithdrawMarginfiStrategy();
+requestAndWithdrawKlendStrategy();
+requestAndWithdrawDriftStrategy();
