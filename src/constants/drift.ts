@@ -5,7 +5,7 @@ export const DRIFT = {
     STATE: "5zpq7DvB6UdFFvpmBPspGPNfUGoBRRCE2HHg5u3gxcsN",
     SOL: {
       MARKET_INDEX: 1,
-      ORACLE: "BAtFj4kQttZRVep3UZS2aZRDixkGYgWsbqTBVDbnSsPF",
+      ORACLE: "3m6i4RFWEDw2Ft4tFHPJtYgmpPe21k56M3FHeWYrgGBz",
     },
     USDC: {
       MARKET_INDEX: 0,
@@ -13,11 +13,11 @@ export const DRIFT = {
     },
     USDT: {
       MARKET_INDEX: 5,
-      ORACLE: "BekJ3P5G3iFeC97sXHuKnUHofCFj9Sbo7uyF2fkKwvit",
+      ORACLE: "JDKJSkxjasBGL3ce1pkrN6tqDzuVUZPWzzkGuyX8m9yN",
     },
     PYUSD: {
       MARKET_INDEX: 22,
-      ORACLE: "HpMoKp3TCd3QT4MWYUKk2zCBwmhr5Df45fB6wdxYqEeh",
+      ORACLE: "5QZMnsyndmphvZF4BNgoMHwVZaREXeE2rpBoCPMxgCCd",
     },
     USDS: {
       MARKET_INDEX: 28,
