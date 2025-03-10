@@ -76,7 +76,7 @@ const createrequestWithdrawVaultIxs = async (
     requestWithdrawVaultArgs,
     {
       payer: user,
-      userAuthority: user,
+      userTransferAuthority: user,
       vault,
     }
   );

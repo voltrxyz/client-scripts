@@ -63,7 +63,7 @@ const createrequestWithdrawVaultIxs = async (
     requestWithdrawVaultArgs,
     {
       payer: user,
-      userAuthority: user,
+      userTransferAuthority: user,
       vault,
     }
   );
@@ -85,7 +85,7 @@ const createWithdrawVaultIxs = async () => {
 
   const withdrawVaultIx = await vc.createWithdrawVaultIx({
     vault,
-    userAuthority: user,
+    userTransferAuthority: user,
     vaultAssetMint,
     assetTokenProgram: new PublicKey(assetTokenProgram),
   });

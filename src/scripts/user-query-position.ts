@@ -32,7 +32,8 @@ const getUserPosition = async () => {
   const vaultAccount = await vc.fetchVaultAccount(vault);
   const vaultAssetTotalValue = vaultAccount.asset.totalValue;
   const userLpShareRatioNumber = Number(userLpAmount) / Number(totalLpSupply);
-  const userAssetAmount = vaultAssetTotalValue * userLpShareRatioNumber;
+  const userAssetAmount =
+    vaultAssetTotalValue.toNumber() * userLpShareRatioNumber;
 
   console.log(
     "User Asset Amount (Before Redemption Fee & Degradation): ",

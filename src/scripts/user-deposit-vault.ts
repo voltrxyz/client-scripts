@@ -75,7 +75,7 @@ const depositVaultHandler = async () => {
 
   const depositVaultIx = await vc.createDepositVaultIx(depositAmount, {
     vault,
-    userAuthority: user,
+    userTransferAuthority: user,
     vaultAssetMint,
     assetTokenProgram: new PublicKey(assetTokenProgram),
   });

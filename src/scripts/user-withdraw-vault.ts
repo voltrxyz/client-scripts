@@ -48,7 +48,7 @@ const withdrawVaultHandler = async () => {
 
   const withdrawVaultIx = await vc.createWithdrawVaultIx({
     vault,
-    userAuthority: user,
+    userTransferAuthority: user,
     vaultAssetMint,
     assetTokenProgram: new PublicKey(assetTokenProgram),
   });
