@@ -49,3 +49,9 @@ export const directWithdrawLpAmountPerStrategy = -1;
 export const depositAssetAmountVault = -1;
 export const withdrawAssetAmountVault = -1;
 export const withdrawLpAmountVault = -1;
+
+// JUP SWAP SPECIFICS
+export const JUP_SWAP_SLIPPAGE_BPS = 100;
+export const JUP_SWAP_MAX_ACCOUNTS = 10;
+export const outputMintAddress = assetMintAddress;
+export const outputTokenProgram = assetTokenProgram;

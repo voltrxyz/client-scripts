@@ -7,11 +7,7 @@ import {
 } from "@solana/web3.js";
 import * as fs from "fs";
 import { BN } from "@coral-xyz/anchor";
-import { sendAndConfirmOptimisedTx } from "../utils/helper";
-import {
-  createAssociatedTokenAccountIdempotentInstruction,
-  getAssociatedTokenAddress,
-} from "@solana/spl-token";
+import { sendAndConfirmOptimisedTx, setupTokenAccount } from "../utils/helper";
 import { RequestWithdrawVaultArgs, VoltrClient } from "@voltr/vault-sdk";
 import {
   userFilePath,
@@ -44,21 +40,14 @@ const requestWithdrawVaultHandler = async (
     vault,
     user
   );
-  const requestWithdrawLpAta = await getAssociatedTokenAddress(
+  let ixs: TransactionInstruction[] = [];
+  const _requestWithdrawLpAta = await setupTokenAccount(
+    connection,
+    user,
     vaultLpMint,
     requestWithdrawVaultReceipt,
-    true
+    ixs
   );
-
-  let ixs: TransactionInstruction[] = [];
-  const createRequestWithdrawLpAtaIx =
-    createAssociatedTokenAccountIdempotentInstruction(
-      user,
-      requestWithdrawLpAta,
-      requestWithdrawVaultReceipt,
-      vaultLpMint
-    );
-  ixs.push(createRequestWithdrawLpAtaIx);
 
   const requestWithdrawVaultArgs: RequestWithdrawVaultArgs = {
     amount: withdrawAmount,

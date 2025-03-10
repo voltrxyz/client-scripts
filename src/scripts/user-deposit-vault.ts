@@ -7,7 +7,7 @@ import {
 } from "@solana/web3.js";
 import * as fs from "fs";
 import { BN } from "@coral-xyz/anchor";
-import { sendAndConfirmOptimisedTx } from "../utils/helper";
+import { sendAndConfirmOptimisedTx, setupTokenAccount } from "../utils/helper";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createCloseAccountInstruction,
@@ -65,14 +65,13 @@ const depositVaultHandler = async () => {
   }
 
   const { vaultLpMint } = vc.findVaultAddresses(vault);
-  const userLpAta = getAssociatedTokenAddressSync(vaultLpMint, user);
-  const createUserLpAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+  const _userLpAta = await setupTokenAccount(
+    connection,
     user,
-    userLpAta,
+    vaultLpMint,
     user,
-    vaultLpMint
+    ixs
   );
-  ixs.push(createUserLpAtaIx);
 
   const depositVaultIx = await vc.createDepositVaultIx(depositAmount, {
     vault,

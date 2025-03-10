@@ -21,8 +21,8 @@ import {
 } from "@voltr/vault-sdk";
 import {
   adminFilePath,
-  assetMintAddress,
   heliusRpcUrl,
+  outputMintAddress,
   vaultAddress,
 } from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
@@ -33,7 +33,6 @@ const payerSecret = Uint8Array.from(payerKpData);
 const payerKp = Keypair.fromSecretKey(payerSecret);
 const payer = payerKp.publicKey;
 const vault = new PublicKey(vaultAddress);
-const vaultAssetMint = new PublicKey(assetMintAddress);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
@@ -138,7 +137,7 @@ const initKlendStrategy = async (
     [
       Buffer.from("reserve_liq_supply"),
       lendingMarket.toBuffer(),
-      vaultAssetMint.toBuffer(),
+      outputMintAddress.toBuffer(),
     ],
     protocolProgram
   );

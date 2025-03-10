@@ -29,7 +29,7 @@ const vaultAssetMint = new PublicKey(assetMintAddress);
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
 
-const initVaultHandler = async () => {
+const initVaultAndAddAdaptorHandler = async () => {
   const createInitializeVaultIx = await vc.createInitializeVaultIx(
     vaultParams,
     {
@@ -40,36 +40,26 @@ const initVaultHandler = async () => {
       payer,
     }
   );
+  const createAddAdaptorIx = await vc.createAddAdaptorIx({
+    vault,
+    admin: payer,
+    payer,
+  });
 
   const txSig = await sendAndConfirmOptimisedTx(
-    [createInitializeVaultIx],
+    [createInitializeVaultIx, createAddAdaptorIx],
     heliusRpcUrl,
     payerKp,
     [vaultKp]
   );
 
   await connection.confirmTransaction(txSig, "finalized");
-  console.log(`Vault initialized with signature: ${txSig}`);
+  console.log(`Vault initialized and adaptor added with signature: ${txSig}`);
   console.log("Vault:", vault.toBase58());
 };
 
-const addAdaptorHandler = async () => {
-  const createAddAdaptorIx = await vc.createAddAdaptorIx({
-    vault,
-    admin: payer,
-    payer,
-  });
-  const txSig = await sendAndConfirmOptimisedTx(
-    [createAddAdaptorIx],
-    heliusRpcUrl,
-    payerKp
-  );
-  console.log(`Adaptor added with signature: ${txSig}`);
-};
-
 const main = async () => {
-  await initVaultHandler();
-  await addAdaptorHandler();
+  await initVaultAndAddAdaptorHandler();
 };
 
 main();

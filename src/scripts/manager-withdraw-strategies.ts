@@ -1,19 +1,14 @@
 import * as fs from "fs";
 import {
+  AddressLookupTableAccount,
   Connection,
   Keypair,
   PublicKey,
   SYSVAR_INSTRUCTIONS_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
-import {
-  createAssociatedTokenAccountIdempotentInstruction,
-  createAssociatedTokenAccountInstruction,
-  getAccount,
-  getAssociatedTokenAddressSync,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import { sendAndConfirmOptimisedTx } from "../utils/helper";
+import { getAccount, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { sendAndConfirmOptimisedTx, setupTokenAccount } from "../utils/helper";
 import { BN } from "@coral-xyz/anchor";
 import {
   LENDING_ADAPTOR_PROGRAM_ID,
@@ -28,8 +23,10 @@ import {
   withdrawAssetAmountPerStrategy,
   assetMintAddress,
   assetTokenProgram,
+  outputMintAddress,
 } from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
+import { setupJupiterSwapForWithdrawStrategy } from "../utils/setup-jupiter-swap";
 
 const payerKpFile = fs.readFileSync(managerFilePath, "utf-8");
 const payerKpData = JSON.parse(payerKpFile);
@@ -60,47 +57,24 @@ const withdrawSolendStrategy = async (
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
 
-  const vaultCollateralAta = getAssociatedTokenAddressSync(
+  let transactionIxs: TransactionInstruction[] = [];
+
+  const vaultCollateralAta = await setupTokenAccount(
+    connection,
+    payer,
     collateralMint,
     vaultStrategyAuth,
-    true
+    transactionIxs
   );
 
-  const vaultCollateralAtaAccount = await connection.getAccountInfo(
-    vaultCollateralAta
-  );
-
-  let transactionIxs: TransactionInstruction[] = [];
-  if (!vaultCollateralAtaAccount) {
-    const createVaultCollateralAtaIx = createAssociatedTokenAccountInstruction(
-      payer,
-      vaultCollateralAta,
-      vaultStrategyAuth,
-      collateralMint
-    );
-    transactionIxs.push(createVaultCollateralAtaIx);
-  }
-
-  const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
+  const _vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    payer,
     vaultAssetMint,
     vaultStrategyAuth,
-    true
+    transactionIxs,
+    assetTokenProgram
   );
-
-  const vaultStrategyAssetAtaAccount = await connection.getAccountInfo(
-    vaultStrategyAssetAta
-  );
-
-  if (!vaultStrategyAssetAtaAccount) {
-    const createVaultStrategyAssetAtaIx =
-      createAssociatedTokenAccountInstruction(
-        payer,
-        vaultStrategyAssetAta,
-        vaultStrategyAuth,
-        vaultAssetMint
-      );
-    transactionIxs.push(createVaultStrategyAssetAtaIx);
-  }
 
   const counterPartyTaAuth = await getAccount(
     connection,
@@ -108,26 +82,49 @@ const withdrawSolendStrategy = async (
     "confirmed"
   ).then((account) => account.owner);
 
+  const remainingAccounts = [
+    { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
+    { pubkey: counterPartyTa, isSigner: false, isWritable: true },
+    { pubkey: protocolProgram, isSigner: false, isWritable: false },
+    { pubkey: vaultCollateralAta, isSigner: false, isWritable: true },
+    { pubkey: reserve, isSigner: false, isWritable: true },
+    { pubkey: collateralMint, isSigner: false, isWritable: true },
+    { pubkey: lendingMarket, isSigner: false, isWritable: true },
+    { pubkey: pythOracle, isSigner: false, isWritable: false },
+    { pubkey: switchboardOracle, isSigner: false, isWritable: false },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+  ];
+
+  let additionalArgs = Buffer.from([]); // No base additional args for Solend
+  let addressLookupTableAccounts: AddressLookupTableAccount[] = [];
+
+  if (!outputMintAddress.equals(assetMintAddress)) {
+    const {
+      additionalArgs: additionalArgsTemp,
+      addressLookupTableAccounts: addressLookupTableAccountsTemp,
+    } = await setupJupiterSwapForWithdrawStrategy(
+      connection,
+      withdrawAmount,
+      counterPartyTa,
+      vaultStrategyAuth,
+      additionalArgs,
+      remainingAccounts,
+      transactionIxs,
+      ["89ig7Cu6Roi9mJMqpY8sBkPYL2cnqzpgP16sJxSUbvct"]
+    );
+    additionalArgs = additionalArgsTemp;
+    addressLookupTableAccounts = addressLookupTableAccountsTemp;
+  }
+
   const createWithdrawStrategyIx = await vc.createWithdrawStrategyIx(
-    { withdrawAmount },
+    { withdrawAmount, additionalArgs },
     {
       manager: payer,
       vault,
       vaultAssetMint,
       assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
-      remainingAccounts: [
-        { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
-        { pubkey: counterPartyTa, isSigner: false, isWritable: true },
-        { pubkey: protocolProgram, isSigner: false, isWritable: false },
-        { pubkey: vaultCollateralAta, isSigner: false, isWritable: true },
-        { pubkey: reserve, isSigner: false, isWritable: true },
-        { pubkey: collateralMint, isSigner: false, isWritable: true },
-        { pubkey: lendingMarket, isSigner: false, isWritable: true },
-        { pubkey: pythOracle, isSigner: false, isWritable: false },
-        { pubkey: switchboardOracle, isSigner: false, isWritable: false },
-        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      ],
+      remainingAccounts,
     }
   );
 
@@ -136,7 +133,9 @@ const withdrawSolendStrategy = async (
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
     heliusRpcUrl,
-    payerKp
+    payerKp,
+    [],
+    addressLookupTableAccounts
   );
   console.log("Solend strategy withdrawn with signature:", txSig);
 };
@@ -162,26 +161,14 @@ const withdrawMarginfiStrategy = async (
 
   let transactionIxs: TransactionInstruction[] = [];
 
-  const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
+  const vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    payer,
     vaultAssetMint,
     vaultStrategyAuth,
-    true
+    transactionIxs,
+    assetTokenProgram
   );
-
-  const vaultStrategyAssetAtaAccount = await connection.getAccountInfo(
-    vaultStrategyAssetAta
-  );
-
-  if (!vaultStrategyAssetAtaAccount) {
-    const createVaultStrategyAssetAtaIx =
-      createAssociatedTokenAccountInstruction(
-        payer,
-        vaultStrategyAssetAta,
-        vaultStrategyAuth,
-        vaultAssetMint
-      );
-    transactionIxs.push(createVaultStrategyAssetAtaIx);
-  }
 
   const counterPartyTaAuth = await getAccount(
     connection,
@@ -189,23 +176,46 @@ const withdrawMarginfiStrategy = async (
     "confirmed"
   ).then((account) => account.owner);
 
+  const remainingAccounts = [
+    { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
+    { pubkey: counterPartyTa, isSigner: false, isWritable: true },
+    { pubkey: protocolProgram, isSigner: false, isWritable: false },
+    { pubkey: marginfiGroup, isSigner: false, isWritable: true },
+    { pubkey: marginfiAccount, isSigner: false, isWritable: true },
+    { pubkey: bank, isSigner: false, isWritable: true },
+    { pubkey: oracle, isSigner: false, isWritable: false },
+  ];
+
+  let additionalArgs = Buffer.from([]); // No base additional args for Marginfi
+  let addressLookupTableAccounts: AddressLookupTableAccount[] = [];
+
+  if (!outputMintAddress.equals(assetMintAddress)) {
+    const {
+      additionalArgs: additionalArgsTemp,
+      addressLookupTableAccounts: addressLookupTableAccountsTemp,
+    } = await setupJupiterSwapForWithdrawStrategy(
+      connection,
+      withdrawAmount,
+      counterPartyTa,
+      vaultStrategyAuth,
+      additionalArgs,
+      remainingAccounts,
+      transactionIxs,
+      ["HGmknUTUmeovMc9ryERNWG6UFZDFDVr9xrum3ZhyL4fC"]
+    );
+    additionalArgs = additionalArgsTemp;
+    addressLookupTableAccounts = addressLookupTableAccountsTemp;
+  }
+
   const createWithdrawStrategyIx = await vc.createWithdrawStrategyIx(
-    { withdrawAmount },
+    { withdrawAmount, additionalArgs },
     {
       manager: payer,
       vault,
       vaultAssetMint,
       assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
-      remainingAccounts: [
-        { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
-        { pubkey: counterPartyTa, isSigner: false, isWritable: true },
-        { pubkey: protocolProgram, isSigner: false, isWritable: false },
-        { pubkey: marginfiGroup, isSigner: false, isWritable: true },
-        { pubkey: marginfiAccount, isSigner: false, isWritable: true },
-        { pubkey: bank, isSigner: false, isWritable: true },
-        { pubkey: oracle, isSigner: false, isWritable: false },
-      ],
+      remainingAccounts,
     }
   );
 
@@ -214,7 +224,9 @@ const withdrawMarginfiStrategy = async (
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
     heliusRpcUrl,
-    payerKp
+    payerKp,
+    [],
+    addressLookupTableAccounts
   );
   console.log("Marginfi strategy withdrawn with signature:", txSig);
 };
@@ -229,7 +241,7 @@ const withdrawKlendStrategy = async (
     [
       Buffer.from("reserve_liq_supply"),
       lendingMarket.toBuffer(),
-      vaultAssetMint.toBuffer(),
+      outputMintAddress.toBuffer(),
     ],
     protocolProgram
   );
@@ -244,51 +256,29 @@ const withdrawKlendStrategy = async (
     [
       Buffer.from("reserve_coll_mint"),
       lendingMarket.toBuffer(),
-      vaultAssetMint.toBuffer(),
+      outputMintAddress.toBuffer(),
     ],
     protocolProgram
   );
-  const userDestinationCollateral = getAssociatedTokenAddressSync(
+
+  let transactionIxs: TransactionInstruction[] = [];
+
+  const userDestinationCollateral = await setupTokenAccount(
+    connection,
+    payer,
     reserveCollateralMint,
     vaultStrategyAuth,
-    true
+    transactionIxs
   );
 
-  const userDestinationCollateralAccount = await connection.getAccountInfo(
-    userDestinationCollateral
-  );
-  let transactionIxs: TransactionInstruction[] = [];
-  if (!userDestinationCollateralAccount) {
-    const createUserDestinationCollateralIx =
-      createAssociatedTokenAccountIdempotentInstruction(
-        payer,
-        userDestinationCollateral,
-        vaultStrategyAuth,
-        reserveCollateralMint
-      );
-    transactionIxs.push(createUserDestinationCollateralIx);
-  }
-
-  const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
+  const _vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    payer,
     vaultAssetMint,
     vaultStrategyAuth,
-    true
+    transactionIxs,
+    assetTokenProgram
   );
-
-  const vaultStrategyAssetAtaAccount = await connection.getAccountInfo(
-    vaultStrategyAssetAta
-  );
-
-  if (!vaultStrategyAssetAtaAccount) {
-    const createVaultStrategyAssetAtaIx =
-      createAssociatedTokenAccountInstruction(
-        payer,
-        vaultStrategyAssetAta,
-        vaultStrategyAuth,
-        vaultAssetMint
-      );
-    transactionIxs.push(createVaultStrategyAssetAtaIx);
-  }
 
   const counterPartyTaAuth = await getAccount(
     connection,
@@ -296,34 +286,57 @@ const withdrawKlendStrategy = async (
     "confirmed"
   ).then((account) => account.owner);
 
+  const remainingAccounts = [
+    { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
+    { pubkey: counterPartyTa, isSigner: false, isWritable: true },
+    { pubkey: protocolProgram, isSigner: false, isWritable: false },
+    { pubkey: lendingMarket, isSigner: false, isWritable: false },
+    { pubkey: reserve, isSigner: false, isWritable: true },
+    { pubkey: reserveCollateralMint, isSigner: false, isWritable: true },
+    {
+      pubkey: userDestinationCollateral,
+      isSigner: false,
+      isWritable: true,
+    },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    {
+      pubkey: SYSVAR_INSTRUCTIONS_PUBKEY,
+      isSigner: false,
+      isWritable: false,
+    },
+    { pubkey: scopePrices, isSigner: false, isWritable: false },
+  ];
+
+  let additionalArgs = Buffer.from([]); // No base additional args for Klend
+  let addressLookupTableAccounts: AddressLookupTableAccount[] = [];
+
+  if (!outputMintAddress.equals(assetMintAddress)) {
+    const {
+      additionalArgs: additionalArgsTemp,
+      addressLookupTableAccounts: addressLookupTableAccountsTemp,
+    } = await setupJupiterSwapForWithdrawStrategy(
+      connection,
+      withdrawAmount,
+      counterPartyTa,
+      vaultStrategyAuth,
+      additionalArgs,
+      remainingAccounts,
+      transactionIxs,
+      ["284iwGtA9X9aLy3KsyV8uT2pXLARhYbiSi5SiM2g47M2"]
+    );
+    additionalArgs = additionalArgsTemp;
+    addressLookupTableAccounts = addressLookupTableAccountsTemp;
+  }
+
   const createWithdrawStrategyIx = await vc.createWithdrawStrategyIx(
-    { withdrawAmount },
+    { withdrawAmount, additionalArgs },
     {
       manager: payer,
       vault,
       vaultAssetMint,
       assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
-      remainingAccounts: [
-        { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
-        { pubkey: counterPartyTa, isSigner: false, isWritable: true },
-        { pubkey: protocolProgram, isSigner: false, isWritable: false },
-        { pubkey: lendingMarket, isSigner: false, isWritable: false },
-        { pubkey: reserve, isSigner: false, isWritable: true },
-        { pubkey: reserveCollateralMint, isSigner: false, isWritable: true },
-        {
-          pubkey: userDestinationCollateral,
-          isSigner: false,
-          isWritable: true,
-        },
-        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-        {
-          pubkey: SYSVAR_INSTRUCTIONS_PUBKEY,
-          isSigner: false,
-          isWritable: false,
-        },
-        { pubkey: scopePrices, isSigner: false, isWritable: false },
-      ],
+      remainingAccounts,
     }
   );
 
@@ -332,7 +345,9 @@ const withdrawKlendStrategy = async (
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
     heliusRpcUrl,
-    payerKp
+    payerKp,
+    [],
+    addressLookupTableAccounts
   );
   console.log("Klend strategy withdrawn with signature:", txSig);
 };
@@ -378,26 +393,14 @@ const withdrawDriftStrategy = async (
 
   let transactionIxs: TransactionInstruction[] = [];
 
-  const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
+  const _vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    payer,
     vaultAssetMint,
     vaultStrategyAuth,
-    true
+    transactionIxs,
+    assetTokenProgram
   );
-
-  const vaultStrategyAssetAtaAccount = await connection.getAccountInfo(
-    vaultStrategyAssetAta
-  );
-
-  if (!vaultStrategyAssetAtaAccount) {
-    const createVaultStrategyAssetAtaIx =
-      createAssociatedTokenAccountInstruction(
-        payer,
-        vaultStrategyAssetAta,
-        vaultStrategyAuth,
-        vaultAssetMint
-      );
-    transactionIxs.push(createVaultStrategyAssetAtaIx);
-  }
 
   const counterPartyTaAuth = await getAccount(
     connection,
@@ -405,12 +408,44 @@ const withdrawDriftStrategy = async (
     "confirmed"
   ).then((account) => account.owner);
 
+  const remainingAccounts = [
+    { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
+    { pubkey: counterPartyTa, isSigner: false, isWritable: true },
+    { pubkey: protocolProgram, isSigner: false, isWritable: false },
+    { pubkey: state, isSigner: false, isWritable: false },
+    { pubkey: user, isSigner: false, isWritable: true },
+    { pubkey: userStats, isSigner: false, isWritable: true },
+    { pubkey: oracle, isSigner: false, isWritable: false },
+    { pubkey: spotMarket, isSigner: false, isWritable: true },
+  ];
+
+  let additionalArgs = Buffer.from([
+    ...marketIndex.toArrayLike(Buffer, "le", 2),
+  ]);
+  let addressLookupTableAccounts: AddressLookupTableAccount[] = [];
+
+  if (!outputMintAddress.equals(assetMintAddress)) {
+    const {
+      additionalArgs: additionalArgsTemp,
+      addressLookupTableAccounts: addressLookupTableAccountsTemp,
+    } = await setupJupiterSwapForWithdrawStrategy(
+      connection,
+      withdrawAmount,
+      counterPartyTa,
+      vaultStrategyAuth,
+      additionalArgs,
+      remainingAccounts,
+      transactionIxs,
+      ["Fpys8GRa5RBWfyeN7AaDUwFGD1zkDCA4z3t4CJLV8dfL"]
+    );
+    additionalArgs = additionalArgsTemp;
+    addressLookupTableAccounts = addressLookupTableAccountsTemp;
+  }
+
   const createWithdrawStrategyIx = await vc.createWithdrawStrategyIx(
     {
       withdrawAmount,
-      additionalArgs: Buffer.from([
-        ...marketIndex.toArrayLike(Buffer, "le", 2),
-      ]),
+      additionalArgs,
     },
     {
       manager: payer,
@@ -418,16 +453,7 @@ const withdrawDriftStrategy = async (
       vaultAssetMint,
       assetTokenProgram: new PublicKey(assetTokenProgram),
       strategy,
-      remainingAccounts: [
-        { pubkey: counterPartyTaAuth, isSigner: false, isWritable: true },
-        { pubkey: counterPartyTa, isSigner: false, isWritable: true },
-        { pubkey: protocolProgram, isSigner: false, isWritable: false },
-        { pubkey: state, isSigner: false, isWritable: false },
-        { pubkey: user, isSigner: false, isWritable: true },
-        { pubkey: userStats, isSigner: false, isWritable: true },
-        { pubkey: oracle, isSigner: false, isWritable: false },
-        { pubkey: spotMarket, isSigner: false, isWritable: true },
-      ],
+      remainingAccounts,
     }
   );
 
@@ -436,7 +462,9 @@ const withdrawDriftStrategy = async (
   const txSig = await sendAndConfirmOptimisedTx(
     transactionIxs,
     heliusRpcUrl,
-    payerKp
+    payerKp,
+    [],
+    addressLookupTableAccounts
   );
   console.log("Drift strategy withdrawn with signature:", txSig);
 };

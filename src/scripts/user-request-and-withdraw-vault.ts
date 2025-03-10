@@ -7,13 +7,8 @@ import {
 } from "@solana/web3.js";
 import * as fs from "fs";
 import { BN } from "@coral-xyz/anchor";
-import { sendAndConfirmOptimisedTx } from "../utils/helper";
-import {
-  createAssociatedTokenAccountIdempotentInstruction,
-  createCloseAccountInstruction,
-  getAssociatedTokenAddressSync,
-  NATIVE_MINT,
-} from "@solana/spl-token";
+import { sendAndConfirmOptimisedTx, setupTokenAccount } from "../utils/helper";
+import { createCloseAccountInstruction, NATIVE_MINT } from "@solana/spl-token";
 import { RequestWithdrawVaultArgs, VoltrClient } from "@voltr/vault-sdk";
 import {
   userFilePath,
@@ -49,21 +44,14 @@ const createrequestWithdrawVaultIxs = async (
     vault,
     user
   );
-  const requestWithdrawLpAta = getAssociatedTokenAddressSync(
+  let ixs: TransactionInstruction[] = [];
+  const _requestWithdrawLpAta = await setupTokenAccount(
+    connection,
+    user,
     vaultLpMint,
     requestWithdrawVaultReceipt,
-    true
+    ixs
   );
-
-  let ixs: TransactionInstruction[] = [];
-  const createRequestWithdrawLpAtaIx =
-    createAssociatedTokenAccountIdempotentInstruction(
-      user,
-      requestWithdrawLpAta,
-      requestWithdrawVaultReceipt,
-      vaultLpMint
-    );
-  ixs.push(createRequestWithdrawLpAtaIx);
 
   const requestWithdrawVaultArgs: RequestWithdrawVaultArgs = {
     amount: withdrawAmount,
@@ -86,15 +74,14 @@ const createrequestWithdrawVaultIxs = async (
 
 const createWithdrawVaultIxs = async () => {
   let ixs: TransactionInstruction[] = [];
-  const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
-  const createUserAssetAtaIx =
-    createAssociatedTokenAccountIdempotentInstruction(
-      user,
-      userAssetAta,
-      user,
-      vaultAssetMint
-    );
-  ixs.push(createUserAssetAtaIx);
+  const userAssetAta = await setupTokenAccount(
+    connection,
+    user,
+    vaultAssetMint,
+    user,
+    ixs,
+    assetTokenProgram
+  );
 
   const withdrawVaultIx = await vc.createWithdrawVaultIx({
     vault,

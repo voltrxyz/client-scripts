@@ -17,8 +17,14 @@ dependencies:
   '@voltr/vault-sdk':
     specifier: ^1.0.0
     version: 1.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.3)
+  bn.js:
+    specifier: ^5.2.1
+    version: 5.2.1
 
 devDependencies:
+  '@types/bn.js':
+    specifier: ^5.1.6
+    version: 5.1.6
   '@types/node':
     specifier: ^22.10.10
     version: 22.13.1
@@ -309,6 +315,12 @@ packages:
 
   /@tsconfig/node16@1.0.4:
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
+    dev: true
+
+  /@types/bn.js@5.1.6:
+    resolution: {integrity: sha512-Xh8vSwUeMKeYYrj3cX4lGQgFSF/N03r+tv4AiLl1SucqV+uTQpxRcnM8AkXKHwYP9ZPXOYXRr2KPXpVlIvqh9w==}
+    dependencies:
+      '@types/node': 22.13.1
     dev: true
 
   /@types/connect@3.4.38:

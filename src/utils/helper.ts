@@ -1,10 +1,16 @@
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import {
+  createAssociatedTokenAccountInstruction,
+  getAssociatedTokenAddressSync,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import {
+  AddressLookupTableAccount,
   ComputeBudgetProgram,
   Connection,
   Keypair,
-  sendAndConfirmTransaction,
-  Transaction,
+  PublicKey,
+  TransactionConfirmationStrategy,
   TransactionInstruction,
   TransactionMessage,
   VersionedTransaction,
@@ -14,7 +20,8 @@ export const sendAndConfirmOptimisedTx = async (
   instructions: TransactionInstruction[],
   heliusRpcUrl: string,
   payerKp: Keypair,
-  signers: Keypair[] = []
+  signers: Keypair[] = [],
+  addressLookupTableAccounts: AddressLookupTableAccount[] = []
 ) => {
   const connection = new Connection(heliusRpcUrl);
   const testInstructions = [
@@ -22,15 +29,16 @@ export const sendAndConfirmOptimisedTx = async (
     ...instructions,
   ];
 
-  const testTransaction = new VersionedTransaction(
+  const cuTransaction = new VersionedTransaction(
     new TransactionMessage({
       instructions: testInstructions,
       payerKey: payerKp.publicKey,
       recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-    }).compileToV0Message()
+    }).compileToV0Message(addressLookupTableAccounts)
   );
+  cuTransaction.sign([payerKp, ...signers]);
 
-  const rpcResponse = await connection.simulateTransaction(testTransaction, {
+  const rpcResponse = await connection.simulateTransaction(cuTransaction, {
     replaceRecentBlockhash: true,
     sigVerify: false,
   });
@@ -49,15 +57,15 @@ export const sendAndConfirmOptimisedTx = async (
 
   instructions.push(computeUnitIx);
 
-  const transaction = new Transaction();
-  transaction.add(...instructions);
+  const feTransaction = new VersionedTransaction(
+    new TransactionMessage({
+      instructions,
+      payerKey: payerKp.publicKey,
+      recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+    }).compileToV0Message(addressLookupTableAccounts)
+  );
+  feTransaction.sign([payerKp, ...signers]);
 
-  transaction.recentBlockhash = (
-    await connection.getLatestBlockhash()
-  ).blockhash;
-
-  transaction.feePayer = payerKp.publicKey;
-  transaction.sign(payerKp, ...signers);
   const response = await fetch(heliusRpcUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -67,7 +75,7 @@ export const sendAndConfirmOptimisedTx = async (
       method: "getPriorityFeeEstimate",
       params: [
         {
-          transaction: bs58.encode(transaction.serialize()), // Pass the serialized transaction in Base58
+          transaction: bs58.encode(feTransaction.serialize()), // Pass the serialized transaction in Base58
           options: { priorityLevel: "High" },
         },
       ],
@@ -83,18 +91,58 @@ export const sendAndConfirmOptimisedTx = async (
   const computePriceIx = ComputeBudgetProgram.setComputeUnitPrice({
     microLamports: feeEstimate.priorityFeeEstimate,
   });
-  transaction.add(computePriceIx);
 
-  const txSig = await sendAndConfirmTransaction(
-    connection,
-    transaction,
-    [payerKp, ...signers],
-    {
-      skipPreflight: false,
-      preflightCommitment: "confirmed",
-      maxRetries: 5,
-    }
+  instructions.push(computePriceIx);
+
+  const transaction = new VersionedTransaction(
+    new TransactionMessage({
+      instructions,
+      payerKey: payerKp.publicKey,
+      recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+    }).compileToV0Message(addressLookupTableAccounts)
   );
+  transaction.sign([payerKp, ...signers]);
+
+  const txSig = await connection.sendTransaction(transaction, {
+    skipPreflight: false,
+    preflightCommitment: "confirmed",
+    maxRetries: 5,
+  });
+
+  const confirmationStrategy: TransactionConfirmationStrategy = {
+    signature: txSig,
+    blockhash: (await connection.getLatestBlockhash()).blockhash,
+    lastValidBlockHeight: (await connection.getLatestBlockhash())
+      .lastValidBlockHeight,
+  };
+
+  await connection.confirmTransaction(confirmationStrategy, "confirmed");
 
   return txSig;
+};
+
+export const setupTokenAccount = async (
+  connection: Connection,
+  payer: PublicKey,
+  mint: PublicKey,
+  owner: PublicKey,
+  txIxs: TransactionInstruction[],
+  programId: PublicKey = TOKEN_PROGRAM_ID
+) => {
+  const tokenAccount = getAssociatedTokenAddressSync(mint, owner, true);
+
+  const tokenAccountInfo = await connection.getAccountInfo(tokenAccount);
+
+  if (!tokenAccountInfo) {
+    const createTokenAccountIx = createAssociatedTokenAccountInstruction(
+      payer,
+      tokenAccount,
+      owner,
+      mint,
+      programId
+    );
+    txIxs.push(createTokenAccountIx);
+  }
+
+  return tokenAccount;
 };

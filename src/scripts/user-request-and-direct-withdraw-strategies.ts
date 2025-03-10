@@ -8,15 +8,12 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
-  createAssociatedTokenAccountIdempotentInstruction,
-  createAssociatedTokenAccountInstruction,
   createCloseAccountInstruction,
   getAccount,
-  getAssociatedTokenAddressSync,
   NATIVE_MINT,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { sendAndConfirmOptimisedTx } from "../utils/helper";
+import { sendAndConfirmOptimisedTx, setupTokenAccount } from "../utils/helper";
 import { BN } from "@coral-xyz/anchor";
 import {
   LENDING_ADAPTOR_PROGRAM_ID,
@@ -58,21 +55,16 @@ const createrequestWithdrawVaultIxs = async (
     vault,
     user
   );
-  const requestWithdrawLpAta = getAssociatedTokenAddressSync(
-    vaultLpMint,
-    requestWithdrawVaultReceipt,
-    true
-  );
 
   let ixs: TransactionInstruction[] = [];
-  const createRequestWithdrawLpAtaIx =
-    createAssociatedTokenAccountIdempotentInstruction(
-      user,
-      requestWithdrawLpAta,
-      requestWithdrawVaultReceipt,
-      vaultLpMint
-    );
-  ixs.push(createRequestWithdrawLpAtaIx);
+
+  const _requestWithdrawLpAta = await setupTokenAccount(
+    connection,
+    user,
+    vaultLpMint,
+    requestWithdrawVaultReceipt,
+    ixs
+  );
 
   const requestWithdrawVaultArgs: RequestWithdrawVaultArgs = {
     amount: withdrawAmount,
@@ -103,15 +95,14 @@ const createWithdrawSolendStrategyIxs = async (
   switchboardOracle: PublicKey
 ) => {
   let transactionIxs: TransactionInstruction[] = [];
-  const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
-  const createUserAssetAtaIx =
-    createAssociatedTokenAccountIdempotentInstruction(
-      user,
-      userAssetAta,
-      user,
-      vaultAssetMint
-    );
-  transactionIxs.push(createUserAssetAtaIx);
+  const userAssetAta = await setupTokenAccount(
+    connection,
+    user,
+    vaultAssetMint,
+    user,
+    transactionIxs,
+    assetTokenProgram
+  );
 
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
@@ -120,46 +111,22 @@ const createWithdrawSolendStrategyIxs = async (
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
 
-  const vaultCollateralAta = getAssociatedTokenAddressSync(
+  const vaultCollateralAta = await setupTokenAccount(
+    connection,
+    user,
     collateralMint,
     vaultStrategyAuth,
-    true
+    transactionIxs
   );
 
-  const vaultCollateralAtaAccount = await connection.getAccountInfo(
-    vaultCollateralAta
-  );
-  if (!vaultCollateralAtaAccount) {
-    const createVaultCollateralAtaIx =
-      createAssociatedTokenAccountIdempotentInstruction(
-        user,
-        vaultCollateralAta,
-        vaultStrategyAuth,
-        collateralMint
-      );
-    transactionIxs.push(createVaultCollateralAtaIx);
-  }
-
-  const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
+  const _vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    user,
     vaultAssetMint,
     vaultStrategyAuth,
-    true
+    transactionIxs,
+    assetTokenProgram
   );
-
-  const vaultStrategyAssetAtaAccount = await connection.getAccountInfo(
-    vaultStrategyAssetAta
-  );
-
-  if (!vaultStrategyAssetAtaAccount) {
-    const createVaultStrategyAssetAtaIx =
-      createAssociatedTokenAccountInstruction(
-        user,
-        vaultStrategyAssetAta,
-        vaultStrategyAuth,
-        vaultAssetMint
-      );
-    transactionIxs.push(createVaultStrategyAssetAtaIx);
-  }
 
   const counterPartyTaAuth = await getAccount(
     connection,
@@ -214,15 +181,14 @@ const createWithdrawMarginfiStrategyIxs = async (
   oracle: PublicKey
 ) => {
   let transactionIxs: TransactionInstruction[] = [];
-  const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
-  const createUserAssetAtaIx =
-    createAssociatedTokenAccountIdempotentInstruction(
-      user,
-      userAssetAta,
-      user,
-      vaultAssetMint
-    );
-  transactionIxs.push(createUserAssetAtaIx);
+  const userAssetAta = await setupTokenAccount(
+    connection,
+    user,
+    vaultAssetMint,
+    user,
+    transactionIxs,
+    assetTokenProgram
+  );
 
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [Buffer.from("liquidity_vault"), bank.toBuffer()],
@@ -236,26 +202,14 @@ const createWithdrawMarginfiStrategyIxs = async (
 
   const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
 
-  const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
+  const _vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    user,
     vaultAssetMint,
     vaultStrategyAuth,
-    true
+    transactionIxs,
+    assetTokenProgram
   );
-
-  const vaultStrategyAssetAtaAccount = await connection.getAccountInfo(
-    vaultStrategyAssetAta
-  );
-
-  if (!vaultStrategyAssetAtaAccount) {
-    const createVaultStrategyAssetAtaIx =
-      createAssociatedTokenAccountInstruction(
-        user,
-        vaultStrategyAssetAta,
-        vaultStrategyAuth,
-        vaultAssetMint
-      );
-    transactionIxs.push(createVaultStrategyAssetAtaIx);
-  }
 
   const counterPartyTaAuth = await getAccount(
     connection,
@@ -306,15 +260,14 @@ const createWithdrawKlendStrategyIxs = async (
   scopePrices: PublicKey
 ) => {
   let transactionIxs: TransactionInstruction[] = [];
-  const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
-  const createUserAssetAtaIx =
-    createAssociatedTokenAccountIdempotentInstruction(
-      user,
-      userAssetAta,
-      user,
-      vaultAssetMint
-    );
-  transactionIxs.push(createUserAssetAtaIx);
+  const userAssetAta = await setupTokenAccount(
+    connection,
+    user,
+    vaultAssetMint,
+    user,
+    transactionIxs,
+    assetTokenProgram
+  );
 
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [
@@ -339,47 +292,22 @@ const createWithdrawKlendStrategyIxs = async (
     ],
     protocolProgram
   );
-  const userDestinationCollateral = getAssociatedTokenAddressSync(
+  const userDestinationCollateral = await setupTokenAccount(
+    connection,
+    user,
     reserveCollateralMint,
     vaultStrategyAuth,
-    true
+    transactionIxs
   );
 
-  const userDestinationCollateralAccount = await connection.getAccountInfo(
-    userDestinationCollateral
-  );
-
-  if (!userDestinationCollateralAccount) {
-    const createUserDestinationCollateralIx =
-      createAssociatedTokenAccountIdempotentInstruction(
-        user,
-        userDestinationCollateral,
-        vaultStrategyAuth,
-        reserveCollateralMint
-      );
-    transactionIxs.push(createUserDestinationCollateralIx);
-  }
-
-  const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
+  const _vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    user,
     vaultAssetMint,
     vaultStrategyAuth,
-    true
+    transactionIxs,
+    assetTokenProgram
   );
-
-  const vaultStrategyAssetAtaAccount = await connection.getAccountInfo(
-    vaultStrategyAssetAta
-  );
-
-  if (!vaultStrategyAssetAtaAccount) {
-    const createVaultStrategyAssetAtaIx =
-      createAssociatedTokenAccountInstruction(
-        user,
-        vaultStrategyAssetAta,
-        vaultStrategyAuth,
-        vaultAssetMint
-      );
-    transactionIxs.push(createVaultStrategyAssetAtaIx);
-  }
 
   const counterPartyTaAuth = await getAccount(
     connection,
@@ -442,15 +370,14 @@ const createWithdrawDriftStrategyIxs = async (
   oracle: PublicKey
 ) => {
   let transactionIxs: TransactionInstruction[] = [];
-  const userAssetAta = getAssociatedTokenAddressSync(vaultAssetMint, user);
-  const createUserAssetAtaIx =
-    createAssociatedTokenAccountIdempotentInstruction(
-      user,
-      userAssetAta,
-      user,
-      vaultAssetMint
-    );
-  transactionIxs.push(createUserAssetAtaIx);
+  const userAssetAta = await setupTokenAccount(
+    connection,
+    user,
+    vaultAssetMint,
+    user,
+    transactionIxs,
+    assetTokenProgram
+  );
 
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [
@@ -484,26 +411,14 @@ const createWithdrawDriftStrategyIxs = async (
     protocolProgram
   );
 
-  const vaultStrategyAssetAta = getAssociatedTokenAddressSync(
+  const _vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    user,
     vaultAssetMint,
     vaultStrategyAuth,
-    true
+    transactionIxs,
+    assetTokenProgram
   );
-
-  const vaultStrategyAssetAtaAccount = await connection.getAccountInfo(
-    vaultStrategyAssetAta
-  );
-
-  if (!vaultStrategyAssetAtaAccount) {
-    const createVaultStrategyAssetAtaIx =
-      createAssociatedTokenAccountInstruction(
-        user,
-        vaultStrategyAssetAta,
-        vaultStrategyAuth,
-        vaultAssetMint
-      );
-    transactionIxs.push(createVaultStrategyAssetAtaIx);
-  }
 
   const counterPartyTaAuth = await getAccount(
     connection,
