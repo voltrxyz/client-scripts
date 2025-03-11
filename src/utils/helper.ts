@@ -129,7 +129,12 @@ export const setupTokenAccount = async (
   txIxs: TransactionInstruction[],
   programId: PublicKey = TOKEN_PROGRAM_ID
 ) => {
-  const tokenAccount = getAssociatedTokenAddressSync(mint, owner, true);
+  const tokenAccount = getAssociatedTokenAddressSync(
+    mint,
+    owner,
+    true,
+    programId
+  );
 
   const tokenAccountInfo = await connection.getAccountInfo(tokenAccount);
 
