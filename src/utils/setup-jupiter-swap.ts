@@ -57,8 +57,8 @@ export const setupJupiterSwapForWithdrawStrategy = async (
   txIxs: TransactionInstruction[],
   baseAddressLookupTableAddresses: string[]
 ) => {
-  const assetPrice = await getPythPrice(assetMintAddress);
-  const outputPrice = await getPythPrice(outputMintAddress);
+  const assetPrice = await getPythPrice(new PublicKey(assetMintAddress));
+  const outputPrice = await getPythPrice(new PublicKey(outputMintAddress));
 
   const swapAmount = amount
     .mul(new BN(outputPrice * 10 ** 6))
@@ -106,11 +106,11 @@ export async function setupJupiterSwap(
   let jupSwapProgramId = new PublicKey(JUPITER_SWAP.PROGRAM_ID);
   const addressLookupTableAccounts: AddressLookupTableAccount[] = [];
   const assetPythOracleStr = Object.values(ORACLE).find(
-    (oracle) => oracle.MINT === assetMintAddress.toBase58()
+    (oracle) => oracle.MINT === assetMintAddress
   )?.PYTH_PULL_ORACLE;
 
   const outputPythOracleStr = Object.values(ORACLE).find(
-    (oracle) => oracle.MINT === outputMintAddress.toBase58()
+    (oracle) => oracle.MINT === outputMintAddress
   )?.PYTH_PULL_ORACLE;
 
   if (!assetPythOracleStr || !outputPythOracleStr) {
@@ -123,18 +123,22 @@ export async function setupJupiterSwap(
   const vaultStrategyOutputAta = await setupTokenAccount(
     connection,
     payer,
-    outputMintAddress,
+    new PublicKey(outputMintAddress),
     vaultStrategyAuth,
     txIxs,
-    outputTokenProgram
+    new PublicKey(outputTokenProgram)
   );
 
   remainingAccounts.push(
     { pubkey: jupSwapProgramId, isSigner: false, isWritable: false },
     { pubkey: vaultStrategyOutputAta, isSigner: false, isWritable: true },
-    { pubkey: outputMintAddress, isSigner: false, isWritable: true },
     {
-      pubkey: outputTokenProgram,
+      pubkey: new PublicKey(outputMintAddress),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: new PublicKey(outputTokenProgram),
       isSigner: false,
       isWritable: false,
     },
@@ -150,14 +154,14 @@ export async function setupJupiterSwap(
           `https://quote-api.jup.ag/v6/quote?inputMint=` +
             `${
               isDeposit
-                ? assetMintAddress.toBase58()
-                : outputMintAddress.toBase58()
+                ? assetMintAddress
+                : outputMintAddress
             }` +
             `&outputMint=` +
             `${
               isDeposit
-                ? outputMintAddress.toBase58()
-                : assetMintAddress.toBase58()
+                ? outputMintAddress
+                : assetMintAddress
             }` +
             `&amount=` +
             `${swapAmount.toString()}` +

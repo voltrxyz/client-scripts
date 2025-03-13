@@ -6,6 +6,7 @@ import {
 } from "@solana/spl-token";
 import {
   AddressLookupTableAccount,
+  AddressLookupTableProgram,
   ComputeBudgetProgram,
   Connection,
   Keypair,
@@ -49,7 +50,7 @@ export const sendAndConfirmOptimisedTx = async (
     throw new Error("Failed to get required CUs");
   }
 
-  const optimalCUs = requiredCUs * 1.1;
+  const optimalCUs = requiredCUs * 1.2;
 
   const computeUnitIx = ComputeBudgetProgram.setComputeUnitLimit({
     units: optimalCUs,
@@ -150,4 +151,47 @@ export const setupTokenAccount = async (
   }
 
   return tokenAccount;
+};
+
+export const setupAddressLookupTable = async (
+  connection: Connection,
+  authority: PublicKey,
+  payer: PublicKey,
+  addresses: string[],
+  txIxs: TransactionInstruction[],
+  lookupTable?: PublicKey
+) => {
+  let lut: PublicKey;
+  const lutAddressesStr: string[] = [];
+  if (lookupTable) {
+    lut = lookupTable;
+    const lutData = await connection.getAddressLookupTable(lut);
+    lutAddressesStr.push(
+      ...(lutData.value?.state.addresses.map((a) => a.toBase58()) ?? [])
+    );
+  } else {
+    const [createLUTIx, lutTemp] = AddressLookupTableProgram.createLookupTable({
+      authority,
+      payer,
+      recentSlot: await connection.getSlot(),
+    });
+    lut = lutTemp;
+    txIxs.push(createLUTIx);
+  }
+
+  const filteredUniqueIxsPubkeys = addresses
+    .filter((pubkey) => !lutAddressesStr.includes(pubkey))
+    .map((pubkey) => new PublicKey(pubkey));
+
+  if (filteredUniqueIxsPubkeys.length > 0) {
+    txIxs.push(
+      AddressLookupTableProgram.extendLookupTable({
+        lookupTable: lut,
+        authority: payer,
+        addresses: filteredUniqueIxsPubkeys,
+        payer,
+      })
+    );
+  }
+  return lut;
 };

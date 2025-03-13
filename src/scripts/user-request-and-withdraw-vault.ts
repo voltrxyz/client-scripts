@@ -28,6 +28,7 @@ const user = userKp.publicKey;
 
 const vault = new PublicKey(vaultAddress);
 const vaultAssetMint = new PublicKey(assetMintAddress);
+const vaultAssetTokenProgram = new PublicKey(assetTokenProgram);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
@@ -80,7 +81,7 @@ const createWithdrawVaultIxs = async () => {
     vaultAssetMint,
     user,
     ixs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const withdrawVaultIx = await vc.createWithdrawVaultIx({

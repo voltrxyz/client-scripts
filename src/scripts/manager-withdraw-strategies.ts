@@ -24,6 +24,8 @@ import {
   assetMintAddress,
   assetTokenProgram,
   outputMintAddress,
+  lookupTableAddress,
+  useLookupTable,
 } from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
 import { setupJupiterSwapForWithdrawStrategy } from "../utils/setup-jupiter-swap";
@@ -36,6 +38,8 @@ const payer = payerKp.publicKey;
 
 const vault = new PublicKey(vaultAddress);
 const vaultAssetMint = new PublicKey(assetMintAddress);
+const vaultAssetTokenProgram = new PublicKey(assetTokenProgram);
+const vaultOutputMint = new PublicKey(outputMintAddress);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
@@ -48,7 +52,8 @@ const withdrawSolendStrategy = async (
   reserve: PublicKey,
   collateralMint: PublicKey,
   pythOracle: PublicKey,
-  switchboardOracle: PublicKey
+  switchboardOracle: PublicKey,
+  lookupTableAddresses: string[] = []
 ) => {
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
@@ -73,7 +78,7 @@ const withdrawSolendStrategy = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -98,7 +103,7 @@ const withdrawSolendStrategy = async (
   let additionalArgs = Buffer.from([]); // No base additional args for Solend
   let addressLookupTableAccounts: AddressLookupTableAccount[] = [];
 
-  if (!outputMintAddress.equals(assetMintAddress)) {
+  if (outputMintAddress !== assetMintAddress) {
     const {
       additionalArgs: additionalArgsTemp,
       addressLookupTableAccounts: addressLookupTableAccountsTemp,
@@ -110,7 +115,7 @@ const withdrawSolendStrategy = async (
       additionalArgs,
       remainingAccounts,
       transactionIxs,
-      ["89ig7Cu6Roi9mJMqpY8sBkPYL2cnqzpgP16sJxSUbvct"]
+      lookupTableAddresses
     );
     additionalArgs = additionalArgsTemp;
     addressLookupTableAccounts = addressLookupTableAccountsTemp;
@@ -145,7 +150,8 @@ const withdrawMarginfiStrategy = async (
   bank: PublicKey,
   marginfiAccount: PublicKey,
   marginfiGroup: PublicKey,
-  oracle: PublicKey
+  oracle: PublicKey,
+  lookupTableAddresses: string[] = []
 ) => {
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [Buffer.from("liquidity_vault"), bank.toBuffer()],
@@ -167,7 +173,7 @@ const withdrawMarginfiStrategy = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -189,7 +195,7 @@ const withdrawMarginfiStrategy = async (
   let additionalArgs = Buffer.from([]); // No base additional args for Marginfi
   let addressLookupTableAccounts: AddressLookupTableAccount[] = [];
 
-  if (!outputMintAddress.equals(assetMintAddress)) {
+  if (outputMintAddress !== assetMintAddress) {
     const {
       additionalArgs: additionalArgsTemp,
       addressLookupTableAccounts: addressLookupTableAccountsTemp,
@@ -201,7 +207,7 @@ const withdrawMarginfiStrategy = async (
       additionalArgs,
       remainingAccounts,
       transactionIxs,
-      ["HGmknUTUmeovMc9ryERNWG6UFZDFDVr9xrum3ZhyL4fC"]
+      lookupTableAddresses
     );
     additionalArgs = additionalArgsTemp;
     addressLookupTableAccounts = addressLookupTableAccountsTemp;
@@ -235,13 +241,14 @@ const withdrawKlendStrategy = async (
   protocolProgram: PublicKey,
   lendingMarket: PublicKey,
   reserve: PublicKey,
-  scopePrices: PublicKey
+  scopePrices: PublicKey,
+  lookupTableAddresses: string[] = []
 ) => {
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [
       Buffer.from("reserve_liq_supply"),
       lendingMarket.toBuffer(),
-      outputMintAddress.toBuffer(),
+      vaultOutputMint.toBuffer(),
     ],
     protocolProgram
   );
@@ -256,7 +263,7 @@ const withdrawKlendStrategy = async (
     [
       Buffer.from("reserve_coll_mint"),
       lendingMarket.toBuffer(),
-      outputMintAddress.toBuffer(),
+      vaultOutputMint.toBuffer(),
     ],
     protocolProgram
   );
@@ -277,7 +284,7 @@ const withdrawKlendStrategy = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -310,7 +317,7 @@ const withdrawKlendStrategy = async (
   let additionalArgs = Buffer.from([]); // No base additional args for Klend
   let addressLookupTableAccounts: AddressLookupTableAccount[] = [];
 
-  if (!outputMintAddress.equals(assetMintAddress)) {
+  if (outputMintAddress !== assetMintAddress) {
     const {
       additionalArgs: additionalArgsTemp,
       addressLookupTableAccounts: addressLookupTableAccountsTemp,
@@ -322,7 +329,7 @@ const withdrawKlendStrategy = async (
       additionalArgs,
       remainingAccounts,
       transactionIxs,
-      ["284iwGtA9X9aLy3KsyV8uT2pXLARhYbiSi5SiM2g47M2"]
+      lookupTableAddresses
     );
     additionalArgs = additionalArgsTemp;
     addressLookupTableAccounts = addressLookupTableAccountsTemp;
@@ -357,7 +364,8 @@ const withdrawDriftStrategy = async (
   state: PublicKey,
   marketIndex: BN,
   subAccountId: BN,
-  oracle: PublicKey
+  oracle: PublicKey,
+  lookupTableAddresses: string[] = []
 ) => {
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
     [
@@ -399,7 +407,7 @@ const withdrawDriftStrategy = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -424,7 +432,7 @@ const withdrawDriftStrategy = async (
   ]);
   let addressLookupTableAccounts: AddressLookupTableAccount[] = [];
 
-  if (!outputMintAddress.equals(assetMintAddress)) {
+  if (outputMintAddress !== assetMintAddress) {
     const {
       additionalArgs: additionalArgsTemp,
       addressLookupTableAccounts: addressLookupTableAccountsTemp,
@@ -436,7 +444,7 @@ const withdrawDriftStrategy = async (
       additionalArgs,
       remainingAccounts,
       transactionIxs,
-      ["Fpys8GRa5RBWfyeN7AaDUwFGD1zkDCA4z3t4CJLV8dfL"]
+      lookupTableAddresses
     );
     additionalArgs = additionalArgsTemp;
     addressLookupTableAccounts = addressLookupTableAccountsTemp;
@@ -477,27 +485,47 @@ const main = async () => {
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.RESERVE),
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.COLLATERAL_MINT),
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.PYTH_ORACLE),
-    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.SWITCHBOARD_ORACLE)
+    new PublicKey(
+      PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.SWITCHBOARD_ORACLE
+    ),
+    useLookupTable
+      ? [
+          ...PROTOCOL_CONSTANTS.SOLEND.LOOKUP_TABLE_ADDRESSES,
+          lookupTableAddress,
+        ]
+      : [...PROTOCOL_CONSTANTS.SOLEND.LOOKUP_TABLE_ADDRESSES]
   );
   await withdrawMarginfiStrategy(
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.BANK),
     new PublicKey(marginfiAccount),
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.GROUP),
-    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.ORACLE)
+    new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.MAIN_MARKET.USDC.ORACLE),
+    useLookupTable
+      ? [
+          ...PROTOCOL_CONSTANTS.MARGINFI.LOOKUP_TABLE_ADDRESSES,
+          lookupTableAddress,
+        ]
+      : [...PROTOCOL_CONSTANTS.MARGINFI.LOOKUP_TABLE_ADDRESSES]
   );
   await withdrawKlendStrategy(
     new PublicKey(PROTOCOL_CONSTANTS.KLEND.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.KLEND.MAIN_MARKET.LENDING_MARKET),
     new PublicKey(PROTOCOL_CONSTANTS.KLEND.MAIN_MARKET.USDC.RESERVE),
-    new PublicKey(PROTOCOL_CONSTANTS.KLEND.SCOPE_ORACLE)
+    new PublicKey(PROTOCOL_CONSTANTS.KLEND.SCOPE_ORACLE),
+    useLookupTable
+      ? [...PROTOCOL_CONSTANTS.KLEND.LOOKUP_TABLE_ADDRESSES, lookupTableAddress]
+      : [...PROTOCOL_CONSTANTS.KLEND.LOOKUP_TABLE_ADDRESSES]
   );
   await withdrawDriftStrategy(
     new PublicKey(PROTOCOL_CONSTANTS.DRIFT.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.STATE),
     new BN(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.MARKET_INDEX),
     new BN(PROTOCOL_CONSTANTS.DRIFT.SUB_ACCOUNT_ID),
-    new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.ORACLE)
+    new PublicKey(PROTOCOL_CONSTANTS.DRIFT.SPOT.USDC.ORACLE),
+    useLookupTable
+      ? [...PROTOCOL_CONSTANTS.DRIFT.LOOKUP_TABLE_ADDRESSES, lookupTableAddress]
+      : [...PROTOCOL_CONSTANTS.DRIFT.LOOKUP_TABLE_ADDRESSES]
   );
 };
 

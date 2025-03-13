@@ -5,13 +5,18 @@ import {
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
 } from "@solana/web3.js";
 import { createWithSeedSync } from "@coral-xyz/anchor/dist/cjs/utils/pubkey";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { sendAndConfirmOptimisedTx } from "../utils/helper";
+import {
+  sendAndConfirmOptimisedTx,
+  setupAddressLookupTable,
+  setupTokenAccount,
+} from "../utils/helper";
 import { BN } from "@coral-xyz/anchor";
 import * as fs from "fs";
 import {
@@ -21,8 +26,12 @@ import {
 } from "@voltr/vault-sdk";
 import {
   adminFilePath,
+  assetMintAddress,
+  assetTokenProgram,
   heliusRpcUrl,
+  lookupTableAddress,
   outputMintAddress,
+  useLookupTable,
   vaultAddress,
 } from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
@@ -33,6 +42,9 @@ const payerSecret = Uint8Array.from(payerKpData);
 const payerKp = Keypair.fromSecretKey(payerSecret);
 const payer = payerKp.publicKey;
 const vault = new PublicKey(vaultAddress);
+const vaultAssetMint = new PublicKey(assetMintAddress);
+const vaultAssetTokenProgram = new PublicKey(assetTokenProgram);
+const vaultOutputMint = new PublicKey(outputMintAddress);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
@@ -40,7 +52,8 @@ const vc = new VoltrClient(connection);
 const initSolendStrategy = async (
   protocolProgram: PublicKey,
   counterPartyTa: PublicKey,
-  lendingMarket: PublicKey
+  lendingMarket: PublicKey,
+  collateralMint: PublicKey
 ) => {
   const [strategy] = PublicKey.findProgramAddressSync(
     [SEEDS.STRATEGY, counterPartyTa.toBuffer()],
@@ -53,6 +66,25 @@ const initSolendStrategy = async (
     vaultStrategyAuth,
     lendingMarket.toBase58().slice(0, 32),
     protocolProgram
+  );
+
+  let transactionIxs: TransactionInstruction[] = [];
+
+  const vaultCollateralAta = await setupTokenAccount(
+    connection,
+    payer,
+    collateralMint,
+    vaultStrategyAuth,
+    transactionIxs
+  );
+
+  const vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    payer,
+    vaultAssetMint,
+    vaultStrategyAuth,
+    transactionIxs,
+    vaultAssetTokenProgram
   );
 
   const createInitializeStrategyIx = await vc.createInitializeStrategyIx(
@@ -78,8 +110,25 @@ const initSolendStrategy = async (
     }
   );
 
+  transactionIxs.push(createInitializeStrategyIx);
+
+  if (useLookupTable)
+    await setupAddressLookupTable(
+      connection,
+      payer,
+      payer,
+      [
+        ...new Set([
+          ...createInitializeStrategyIx.keys.map((k) => k.pubkey.toBase58()),
+          vaultStrategyAssetAta.toBase58(),
+          vaultCollateralAta.toBase58(),
+        ]),
+      ],
+      transactionIxs
+    );
+
   const txSig = await sendAndConfirmOptimisedTx(
-    [createInitializeStrategyIx],
+    transactionIxs,
     heliusRpcUrl,
     payerKp
   );
@@ -104,6 +153,19 @@ const initMarginfiStrategy = async (
   const marginfiAccountKp = Keypair.generate();
   const marginfiAccount = marginfiAccountKp.publicKey;
 
+  const { vaultStrategyAuth } = vc.findVaultStrategyAddresses(vault, strategy);
+
+  let transactionIxs: TransactionInstruction[] = [];
+
+  const vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    payer,
+    vaultAssetMint,
+    vaultStrategyAuth,
+    transactionIxs,
+    vaultAssetTokenProgram
+  );
+
   const createInitializeStrategyIx = await vc.createInitializeStrategyIx(
     {},
     {
@@ -119,13 +181,30 @@ const initMarginfiStrategy = async (
     }
   );
 
+  transactionIxs.push(createInitializeStrategyIx);
+
+  if (useLookupTable)
+    await setupAddressLookupTable(
+      connection,
+      payer,
+      payer,
+      [
+        ...new Set([
+          ...createInitializeStrategyIx.keys.map((k) => k.pubkey.toBase58()),
+          vaultStrategyAssetAta.toBase58(),
+        ]),
+      ],
+      transactionIxs
+    );
+
   const txSig = await sendAndConfirmOptimisedTx(
-    [createInitializeStrategyIx],
+    transactionIxs,
     heliusRpcUrl,
     payerKp,
     [marginfiAccountKp]
   );
   console.log("Marginfi strategy initialized with signature:", txSig);
+  console.log(`Update address into variables.ts`);
   console.log("Marginfi account:", marginfiAccount.toBase58());
 };
 
@@ -137,7 +216,7 @@ const initKlendStrategy = async (
     [
       Buffer.from("reserve_liq_supply"),
       lendingMarket.toBuffer(),
-      outputMintAddress.toBuffer(),
+      vaultOutputMint.toBuffer(),
     ],
     protocolProgram
   );
@@ -161,6 +240,34 @@ const initKlendStrategy = async (
       recentSlot: await connection.getSlot("confirmed"),
     });
 
+  const [reserveCollateralMint] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("reserve_coll_mint"),
+      lendingMarket.toBuffer(),
+      vaultOutputMint.toBuffer(),
+    ],
+    protocolProgram
+  );
+
+  let transactionIxs: TransactionInstruction[] = [];
+
+  const vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    payer,
+    vaultAssetMint,
+    vaultStrategyAuth,
+    transactionIxs,
+    vaultAssetTokenProgram
+  );
+
+  const userDestinationCollateral = await setupTokenAccount(
+    connection,
+    payer,
+    reserveCollateralMint,
+    vaultStrategyAuth,
+    transactionIxs
+  );
+
   const createInitializeStrategyIx = await vc.createInitializeStrategyIx(
     {},
     {
@@ -177,8 +284,25 @@ const initKlendStrategy = async (
     }
   );
 
+  transactionIxs.push(createInitializeStrategyIx);
+
+  if (useLookupTable)
+    await setupAddressLookupTable(
+      connection,
+      payer,
+      payer,
+      [
+        ...new Set([
+          ...createInitializeStrategyIx.keys.map((k) => k.pubkey.toBase58()),
+          vaultStrategyAssetAta.toBase58(),
+          userDestinationCollateral.toBase58(),
+        ]),
+      ],
+      transactionIxs
+    );
+
   const txSig = await sendAndConfirmOptimisedTx(
-    [createInitializeStrategyIx],
+    transactionIxs,
     heliusRpcUrl,
     payerKp
   );
@@ -219,6 +343,17 @@ const initDriftStrategy = async (
     protocolProgram
   );
 
+  let transactionIxs: TransactionInstruction[] = [];
+
+  const vaultStrategyAssetAta = await setupTokenAccount(
+    connection,
+    payer,
+    vaultAssetMint,
+    vaultStrategyAuth,
+    transactionIxs,
+    vaultAssetTokenProgram
+  );
+
   const createInitializeStrategyIx = await vc.createInitializeStrategyIx(
     {},
     {
@@ -236,8 +371,25 @@ const initDriftStrategy = async (
     }
   );
 
+  transactionIxs.push(createInitializeStrategyIx);
+
+  if (useLookupTable)
+    await setupAddressLookupTable(
+      connection,
+      payer,
+      payer,
+      [
+        ...new Set([
+          ...createInitializeStrategyIx.keys.map((k) => k.pubkey.toBase58()),
+          vaultStrategyAssetAta.toBase58(),
+        ]),
+      ],
+      transactionIxs,
+      new PublicKey(lookupTableAddress)
+    );
+
   const txSig = await sendAndConfirmOptimisedTx(
-    [createInitializeStrategyIx],
+    transactionIxs,
     heliusRpcUrl,
     payerKp
   );
@@ -248,7 +400,8 @@ const main = async () => {
   await initSolendStrategy(
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.PROGRAM_ID),
     new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.COUNTERPARTY_TA),
-    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.LENDING_MARKET)
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.LENDING_MARKET),
+    new PublicKey(PROTOCOL_CONSTANTS.SOLEND.MAIN_MARKET.USDC.COLLATERAL_MINT)
   );
   await initMarginfiStrategy(
     new PublicKey(PROTOCOL_CONSTANTS.MARGINFI.PROGRAM_ID),

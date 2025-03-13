@@ -1,12 +1,22 @@
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import * as fs from "fs";
-import { sendAndConfirmOptimisedTx } from "../utils/helper";
+import {
+  sendAndConfirmOptimisedTx,
+  setupAddressLookupTable,
+} from "../utils/helper";
 import { VoltrClient } from "@voltr/vault-sdk";
 import {
   adminFilePath,
   assetMintAddress,
   heliusRpcUrl,
   managerFilePath,
+  useLookupTable,
+  vaultAddress,
   vaultParams,
 } from "../variables";
 
@@ -33,7 +43,7 @@ const initVaultAndAddAdaptorHandler = async () => {
   const createInitializeVaultIx = await vc.createInitializeVaultIx(
     vaultParams,
     {
-      vault: vaultKp,
+      vault,
       vaultAssetMint,
       admin: payer,
       manager,
@@ -46,8 +56,27 @@ const initVaultAndAddAdaptorHandler = async () => {
     payer,
   });
 
+  const transactionIxs: TransactionInstruction[] = [];
+
+  transactionIxs.push(createInitializeVaultIx);
+  transactionIxs.push(createAddAdaptorIx);
+  const lut = useLookupTable? await setupAddressLookupTable(
+    connection,
+    payer,
+    payer,
+    [
+      ...new Set([
+        ...createInitializeVaultIx.keys.map((k) => k.pubkey.toBase58()),
+        ...createAddAdaptorIx.keys.map((k) => k.pubkey.toBase58()),
+      ]),
+    ],
+        transactionIxs
+      )
+    : null;
+
+
   const txSig = await sendAndConfirmOptimisedTx(
-    [createInitializeVaultIx, createAddAdaptorIx],
+    transactionIxs,
     heliusRpcUrl,
     payerKp,
     [vaultKp]
@@ -55,7 +84,9 @@ const initVaultAndAddAdaptorHandler = async () => {
 
   await connection.confirmTransaction(txSig, "finalized");
   console.log(`Vault initialized and adaptor added with signature: ${txSig}`);
+  console.log(`Update addresses into variables.ts`);
   console.log("Vault:", vault.toBase58());
+  if (lut) console.log("Lookup Table", lut.toBase58());
 };
 
 const main = async () => {

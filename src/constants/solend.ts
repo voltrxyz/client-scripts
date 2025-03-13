@@ -1,5 +1,6 @@
 export const SOLEND = {
   PROGRAM_ID: "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo",
+  LOOKUP_TABLE_ADDRESSES: ["89ig7Cu6Roi9mJMqpY8sBkPYL2cnqzpgP16sJxSUbvct"],
   MAIN_MARKET: {
     LENDING_MARKET: "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtfpks7FatyKvdY",
     SOL: {

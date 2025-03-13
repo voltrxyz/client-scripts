@@ -38,6 +38,7 @@ const user = userKp.publicKey;
 
 const vault = new PublicKey(vaultAddress);
 const vaultAssetMint = new PublicKey(assetMintAddress);
+const vaultAssetTokenProgram = new PublicKey(assetTokenProgram);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
@@ -58,7 +59,7 @@ const withdrawSolendStrategy = async (
     vaultAssetMint,
     user,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const [strategy] = PublicKey.findProgramAddressSync(
@@ -82,7 +83,7 @@ const withdrawSolendStrategy = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -149,7 +150,7 @@ const withdrawMarginfiStrategy = async (
     vaultAssetMint,
     user,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
@@ -170,7 +171,7 @@ const withdrawMarginfiStrategy = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -233,7 +234,7 @@ const withdrawKlendStrategy = async (
     vaultAssetMint,
     user,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
@@ -273,7 +274,7 @@ const withdrawKlendStrategy = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -348,7 +349,7 @@ const withdrawDriftStrategy = async (
     vaultAssetMint,
     user,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
@@ -389,7 +390,7 @@ const withdrawDriftStrategy = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(

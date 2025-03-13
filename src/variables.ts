@@ -35,6 +35,11 @@ export const heliusRpcUrl = "";
 // TO FILL UP AFTER INIT VAULT
 export const vaultAddress = "";
 
+// LUT CREATED AND EXTENDED ON INITS AND UTILISED FOR DEPOSIT AND WITHDRAW STRATEGIES
+export const useLookupTable = false;
+// TO FILL UP IF useLookupTable IS TRUE AFTER LUT IS CREATED
+export const lookupTableAddress = "";
+
 // TO FILL UP AFTER INIT MARGINFI STRATEGY (MARGINFI SPECIFIC)
 export const marginfiAccount = "";
 
@@ -52,6 +57,6 @@ export const withdrawLpAmountVault = -1;
 
 // JUP SWAP SPECIFICS
 export const JUP_SWAP_SLIPPAGE_BPS = 100;
-export const JUP_SWAP_MAX_ACCOUNTS = 10;
+export const JUP_SWAP_MAX_ACCOUNTS = 30;
 export const outputMintAddress = assetMintAddress;
 export const outputTokenProgram = assetTokenProgram;

@@ -40,6 +40,7 @@ const user = userKp.publicKey;
 
 const vault = new PublicKey(vaultAddress);
 const vaultAssetMint = new PublicKey(assetMintAddress);
+const vaultAssetTokenProgram = new PublicKey(assetTokenProgram);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
@@ -101,7 +102,7 @@ const createWithdrawSolendStrategyIxs = async (
     vaultAssetMint,
     user,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const [strategy] = PublicKey.findProgramAddressSync(
@@ -125,7 +126,7 @@ const createWithdrawSolendStrategyIxs = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -187,7 +188,7 @@ const createWithdrawMarginfiStrategyIxs = async (
     vaultAssetMint,
     user,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
@@ -208,7 +209,7 @@ const createWithdrawMarginfiStrategyIxs = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -266,7 +267,7 @@ const createWithdrawKlendStrategyIxs = async (
     vaultAssetMint,
     user,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
@@ -306,7 +307,7 @@ const createWithdrawKlendStrategyIxs = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(
@@ -376,7 +377,7 @@ const createWithdrawDriftStrategyIxs = async (
     vaultAssetMint,
     user,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const [counterPartyTa] = PublicKey.findProgramAddressSync(
@@ -417,7 +418,7 @@ const createWithdrawDriftStrategyIxs = async (
     vaultAssetMint,
     vaultStrategyAuth,
     transactionIxs,
-    assetTokenProgram
+    vaultAssetTokenProgram
   );
 
   const counterPartyTaAuth = await getAccount(

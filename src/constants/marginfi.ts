@@ -1,5 +1,6 @@
 export const MARGINFI = {
   PROGRAM_ID: "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
+  LOOKUP_TABLE_ADDRESSES: ["HGmknUTUmeovMc9ryERNWG6UFZDFDVr9xrum3ZhyL4fC"],
   MAIN_MARKET: {
     GROUP: "4qp6Fx6tnZkY5Wropq9wUYgtFxXKwE6viZxFHg3rdAG8",
     SOL: {
