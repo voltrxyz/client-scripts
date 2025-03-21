@@ -146,23 +146,22 @@ export async function setupJupiterSwap(
     { pubkey: assetPythOracle, isSigner: false, isWritable: false }
   );
 
+  addressLookupTableAccounts.push(
+    ...(await getAddressLookupTableAccounts(
+      [...baseAddressLookupTableAddresses],
+      connection
+    ))
+  );
+
   if (amount && amount.gt(new BN(0))) {
     try {
       // Get Jupiter quote
       const jupQuoteResponse = await (
         await fetch(
           `https://quote-api.jup.ag/v6/quote?inputMint=` +
-            `${
-              isDeposit
-                ? assetMintAddress
-                : outputMintAddress
-            }` +
+            `${isDeposit ? assetMintAddress : outputMintAddress}` +
             `&outputMint=` +
-            `${
-              isDeposit
-                ? outputMintAddress
-                : assetMintAddress
-            }` +
+            `${isDeposit ? outputMintAddress : assetMintAddress}` +
             `&amount=` +
             `${swapAmount.toString()}` +
             `&slippageBps=` +
@@ -215,35 +214,11 @@ export async function setupJupiterSwap(
       }
 
       // Get address lookup table accounts
-      const getAddressLookupTableAccounts = async (
-        keys: string[]
-      ): Promise<AddressLookupTableAccount[]> => {
-        const addressLookupTableAccountInfos =
-          await connection.getMultipleAccountsInfo(
-            keys.map((key) => new PublicKey(key))
-          );
-
-        return addressLookupTableAccountInfos.reduce(
-          (acc, accountInfo, index) => {
-            const addressLookupTableAddress = keys[index];
-            if (accountInfo) {
-              const addressLookupTableAccount = new AddressLookupTableAccount({
-                key: new PublicKey(addressLookupTableAddress),
-                state: AddressLookupTableAccount.deserialize(accountInfo.data),
-              });
-              acc.push(addressLookupTableAccount);
-            }
-            return acc;
-          },
-          new Array<AddressLookupTableAccount>()
-        );
-      };
-
       addressLookupTableAccounts.push(
-        ...(await getAddressLookupTableAccounts([
-          ...baseAddressLookupTableAddresses,
-          ...addressLookupTableAddresses,
-        ]))
+        ...(await getAddressLookupTableAccounts(
+          [...baseAddressLookupTableAddresses, ...addressLookupTableAddresses],
+          connection
+        ))
       );
 
       jupSwapProgramId = new PublicKey(swapInstructionPayload.programId);
@@ -286,4 +261,26 @@ const getPythPrice = async (mint: PublicKey) => {
   const pythPrice =
     pythPriceParsed.price.price * Math.pow(10, pythPriceParsed.price.expo);
   return pythPrice;
+};
+
+const getAddressLookupTableAccounts = async (
+  keys: string[],
+  connection: Connection
+): Promise<AddressLookupTableAccount[]> => {
+  const addressLookupTableAccountInfos =
+    await connection.getMultipleAccountsInfo(
+      keys.map((key) => new PublicKey(key))
+    );
+
+  return addressLookupTableAccountInfos.reduce((acc, accountInfo, index) => {
+    const addressLookupTableAddress = keys[index];
+    if (accountInfo) {
+      const addressLookupTableAccount = new AddressLookupTableAccount({
+        key: new PublicKey(addressLookupTableAddress),
+        state: AddressLookupTableAccount.deserialize(accountInfo.data),
+      });
+      acc.push(addressLookupTableAccount);
+    }
+    return acc;
+  }, new Array<AddressLookupTableAccount>());
 };
