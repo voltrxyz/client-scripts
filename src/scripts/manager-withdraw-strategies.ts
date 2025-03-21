@@ -26,6 +26,7 @@ import {
   outputMintAddress,
   lookupTableAddress,
   useLookupTable,
+  outputTokenProgram,
 } from "../variables";
 import { PROTOCOL_CONSTANTS } from "../constants";
 import { setupJupiterSwapForWithdrawStrategy } from "../utils/setup-jupiter-swap";
@@ -40,6 +41,7 @@ const vault = new PublicKey(vaultAddress);
 const vaultAssetMint = new PublicKey(assetMintAddress);
 const vaultAssetTokenProgram = new PublicKey(assetTokenProgram);
 const vaultOutputMint = new PublicKey(outputMintAddress);
+const vaultOutputTokenProgram = new PublicKey(outputTokenProgram);
 
 const connection = new Connection(heliusRpcUrl);
 const vc = new VoltrClient(connection);
@@ -84,7 +86,8 @@ const withdrawSolendStrategy = async (
   const counterPartyTaAuth = await getAccount(
     connection,
     counterPartyTa,
-    "confirmed"
+    "confirmed",
+    vaultOutputTokenProgram
   ).then((account) => account.owner);
 
   const remainingAccounts = [
@@ -179,7 +182,8 @@ const withdrawMarginfiStrategy = async (
   const counterPartyTaAuth = await getAccount(
     connection,
     counterPartyTa,
-    "confirmed"
+    "confirmed",
+    vaultOutputTokenProgram
   ).then((account) => account.owner);
 
   const remainingAccounts = [
@@ -290,7 +294,8 @@ const withdrawKlendStrategy = async (
   const counterPartyTaAuth = await getAccount(
     connection,
     counterPartyTa,
-    "confirmed"
+    "confirmed",
+    vaultOutputTokenProgram
   ).then((account) => account.owner);
 
   const remainingAccounts = [
@@ -413,7 +418,8 @@ const withdrawDriftStrategy = async (
   const counterPartyTaAuth = await getAccount(
     connection,
     counterPartyTa,
-    "confirmed"
+    "confirmed",
+    vaultOutputTokenProgram
   ).then((account) => account.owner);
 
   const remainingAccounts = [
