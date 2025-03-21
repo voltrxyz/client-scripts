@@ -1,6 +1,6 @@
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import {
-  createAssociatedTokenAccountInstruction,
+  createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
@@ -140,13 +140,14 @@ export const setupTokenAccount = async (
   const tokenAccountInfo = await connection.getAccountInfo(tokenAccount);
 
   if (!tokenAccountInfo) {
-    const createTokenAccountIx = createAssociatedTokenAccountInstruction(
-      payer,
-      tokenAccount,
-      owner,
-      mint,
-      programId
-    );
+    const createTokenAccountIx =
+      createAssociatedTokenAccountIdempotentInstruction(
+        payer,
+        tokenAccount,
+        owner,
+        mint,
+        programId
+      );
     txIxs.push(createTokenAccountIx);
   }
 
