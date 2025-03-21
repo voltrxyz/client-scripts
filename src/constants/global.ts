@@ -39,3 +39,5 @@ export const ORACLE = {
 export const JUPITER_SWAP = {
   PROGRAM_ID: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
 };
+
+export const PROTOCOL_ADMIN = "vxyzZyfd6nJ3v82fTSmuRiKF4owWF9sAXqneu9mne9n";
