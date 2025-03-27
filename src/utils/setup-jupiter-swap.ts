@@ -18,6 +18,7 @@ import { setupTokenAccount } from "./helper";
 export const setupJupiterSwapForDepositStrategy = async (
   connection: Connection,
   amount: BN,
+  minimumThresholdAmountOut: BN,
   payer: PublicKey,
   vaultStrategyAuth: PublicKey,
   additionalArgsBase: Buffer,
@@ -33,6 +34,7 @@ export const setupJupiterSwapForDepositStrategy = async (
     connection,
     amount,
     amount,
+    minimumThresholdAmountOut,
     payer,
     vaultStrategyAuth,
     additionalArgsBase,
@@ -46,6 +48,7 @@ export const setupJupiterSwapForDepositStrategy = async (
 export const setupJupiterSwapForWithdrawStrategy = async (
   connection: Connection,
   amount: BN,
+  minimumThresholdAmountOut: BN,
   payer: PublicKey,
   vaultStrategyAuth: PublicKey,
   additionalArgsBase: Buffer,
@@ -68,6 +71,7 @@ export const setupJupiterSwapForWithdrawStrategy = async (
     connection,
     amount,
     swapAmount,
+    minimumThresholdAmountOut,
     payer,
     vaultStrategyAuth,
     additionalArgsBase,
@@ -82,6 +86,7 @@ export async function setupJupiterSwap(
   connection: Connection,
   amount: BN,
   swapAmount: BN,
+  minimumThresholdAmountOut: BN,
   payer: PublicKey,
   vaultStrategyAuth: PublicKey,
   additionalArgsBase: Buffer,
@@ -170,6 +175,13 @@ export async function setupJupiterSwap(
             `${maxAccounts}`
         )
       ).json();
+
+      if (
+        new BN(jupQuoteResponse.otherAmountThreshold).lt(
+          minimumThresholdAmountOut
+        )
+      )
+        throw new Error("Jupiter swap amount is too low");
 
       // Get Jupiter swap instructions
       const instructions = await (

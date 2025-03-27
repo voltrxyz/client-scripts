@@ -115,6 +115,7 @@ const depositSolendStrategy = async (
     } = await setupJupiterSwapForDepositStrategy(
       connection,
       depositAmount,
+      new BN(0),
       payer,
       vaultStrategyAuth,
       additionalArgs,
@@ -202,6 +203,7 @@ const depositMarginfiStrategy = async (
     } = await setupJupiterSwapForDepositStrategy(
       connection,
       depositAmount,
+      new BN(0),
       payer,
       vaultStrategyAuth,
       additionalArgs,
@@ -327,6 +329,7 @@ const depositKlendStrategy = async (
     } = await setupJupiterSwapForDepositStrategy(
       connection,
       depositAmount,
+      new BN(0),
       payer,
       vaultStrategyAuth,
       additionalArgs,
@@ -439,6 +442,7 @@ const depositDriftStrategy = async (
     } = await setupJupiterSwapForDepositStrategy(
       connection,
       depositAmount,
+      new BN(0),
       payer,
       vaultStrategyAuth,
       additionalArgs,

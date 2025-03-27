@@ -113,6 +113,7 @@ const withdrawSolendStrategy = async (
     } = await setupJupiterSwapForWithdrawStrategy(
       connection,
       withdrawAmount,
+      new BN(0),
       counterPartyTa,
       vaultStrategyAuth,
       additionalArgs,
@@ -206,6 +207,7 @@ const withdrawMarginfiStrategy = async (
     } = await setupJupiterSwapForWithdrawStrategy(
       connection,
       withdrawAmount,
+      new BN(0),
       counterPartyTa,
       vaultStrategyAuth,
       additionalArgs,
@@ -329,6 +331,7 @@ const withdrawKlendStrategy = async (
     } = await setupJupiterSwapForWithdrawStrategy(
       connection,
       withdrawAmount,
+      new BN(0),
       counterPartyTa,
       vaultStrategyAuth,
       additionalArgs,
@@ -445,6 +448,7 @@ const withdrawDriftStrategy = async (
     } = await setupJupiterSwapForWithdrawStrategy(
       connection,
       withdrawAmount,
+      new BN(0),
       counterPartyTa,
       vaultStrategyAuth,
       additionalArgs,
