@@ -19,6 +19,9 @@ export const KLEND = {
     USDS: {
       RESERVE: "BHUi32TrEsfN2U821G4FprKrR4hTeK4LCWtA3BFetuqA",
     },
+    USDG: {
+      RESERVE: "ESCkPWKHmgNE7Msf77n9yzqJd5kQVWWGy3o5Mgxhvavp",
+    },
   },
   JITO_MARKET: {
     LENDING_MARKET: "H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
@@ -45,6 +48,9 @@ export const KLEND = {
     },
     USDC: {
       RESERVE: "Ga4rZytCpq1unD4DbEJ5bkHeUz9g3oh9AAFEi6vSauXp",
+    },
+    USDG: {
+      RESERVE: "8rM1AY8M4YP4xNVmxhKnEUnj5CRWrcbcHpcgMoDfgqVi",
     },
   },
   ETHENA_MARKET: {

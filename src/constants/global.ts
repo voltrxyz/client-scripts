@@ -34,6 +34,13 @@ export const ORACLE = {
     PYTH_FEED_ID:
       "0x77f0971af11cc8bac224917275c1bf55f2319ed5c654a1ca955c82fa2d297ea1",
   },
+  USDG: {
+    MINT: "2u1tszSeqZ3qBWF3uNGPFc8TzMk2tdiwknnRMWGWjGWH",
+    PROGRAM_ID: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    PYTH_PULL_ORACLE: "6JkZmXGgWnzsyTQaqRARzP64iFYnpMNT4siiuUDUaB8s",
+    PYTH_FEED_ID:
+      "0xdaa58c6a3ce7d4b9c46c32a6e646012c17c4a2b24c08dd8c5e476118b855a7da",
+  },
 };
 
 export const JUPITER_SWAP = {
