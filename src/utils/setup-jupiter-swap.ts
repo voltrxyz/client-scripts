@@ -15,6 +15,8 @@ import { JUPITER_SWAP, ORACLE } from "../constants/global";
 import BN from "bn.js";
 import { setupTokenAccount } from "./helper";
 
+const JUP_ENDPOINT = "https://lite-api.jup.ag/swap/v1";
+
 export const setupJupiterSwapForDepositStrategy = async (
   connection: Connection,
   amount: BN,
@@ -163,7 +165,7 @@ export async function setupJupiterSwap(
       // Get Jupiter quote
       const jupQuoteResponse = await (
         await fetch(
-          `https://quote-api.jup.ag/v6/quote?inputMint=` +
+          `${JUP_ENDPOINT}/quote?inputMint=` +
             `${isDeposit ? assetMintAddress : outputMintAddress}` +
             `&outputMint=` +
             `${isDeposit ? outputMintAddress : assetMintAddress}` +
@@ -185,7 +187,7 @@ export async function setupJupiterSwap(
 
       // Get Jupiter swap instructions
       const instructions = await (
-        await fetch("https://quote-api.jup.ag/v6/swap-instructions", {
+        await fetch(`${JUP_ENDPOINT}/swap-instructions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
